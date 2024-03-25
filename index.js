@@ -14,6 +14,7 @@ app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
     try {
         await sequelize.authenticate()
+        await sequelize.sync({force: false})
     } catch(e) {
         console.error(e)
     }
