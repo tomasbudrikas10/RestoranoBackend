@@ -531,6 +531,124 @@ app.delete("/orders/:orderId",
     }
 )
 
+app.get("/orderitems", async (req, res) => {
+    let orderitems = await db["OrderItem"].findAll()
+    res.status(200).json({message: "Successfully retrieved all order items for all orders.", data: orderitems})
+})
+
+app.post("/orderitems",
+    body("orderId").trim().notEmpty().withMessage("Order ID must not be empty.")
+        .isNumeric().withMessage("Order ID must be numeric."),
+    body("productId").trim().notEmpty().withMessage("Product ID must not be empty.")
+        .isNumeric().withMessage("Product ID must be numeric."),
+    body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
+        .isNumeric().withMessage("Quantity must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let orderExists = await db["Order"].findByPk(data.orderId)
+            let productExists = await db["Product"].findByPk(data.productId)
+            if (orderExists === null) {
+                res.status(400).json({message: "Failed to create order item.", errors: ["The provided order doesn't exist."]})
+            } else if (productExists === null) {
+                res.status(400).json({message: "Failed to create order item.", errors: ["The provided product doesn't exist."]})
+            } else {
+                let orderItemExists = await db["OrderItem"].findOne({where: {
+                    orderId: data.orderId,
+                    productId: data.productId
+                }})
+                if (orderItemExists === null) {
+                    await db["OrderItem"].create(data)
+                    res.status(200).json({message: "Successfully created order item."})
+                } else {
+                    res.status(400).json({message: "Failed to create order item.", errors: ["An order item with this product already exists on the provided order."]})
+                }
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create order.", errors: errors})
+        }
+})
+
+app.get("/orderitems/:orderItemId",
+    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
+            if (orderItem !== null) {
+                res.status(200).json({message: "Successfully retrieved order item.", data: orderItem})
+            } else {
+                res.status(404).json({message: "Failed to retrieve order item.", errors: ["Order item with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve order item.", errors: errors})
+        }
+    }
+)
+
+app.put("/orderitems/:orderItemId",
+    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    body("orderId").trim().notEmpty().withMessage("Order ID must not be empty.")
+        .isNumeric().withMessage("Order ID must be numeric."),
+    body("productId").trim().notEmpty().withMessage("Product ID must not be empty.")
+        .isNumeric().withMessage("Product ID must be numeric."),
+    body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
+        .isNumeric().withMessage("Quantity must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let orderExists = await db["Order"].findByPk(data.orderId)
+            let productExists = await db["Product"].findByPk(data.productId)
+            let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
+            if (orderExists === null) {
+                res.status(400).json({message: "Failed to update order item.", errors: ["The provided order doesn't exist."]})
+            } else if (productExists === null) {
+                res.status(400).json({message: "Failed to update order item.", errors: ["The provided product doesn't exist."]})
+            } else if (orderItem === null) {
+                res.status(404).json({message: "Failed to update order item.", errors: ["The provided order item doesn't exist."]})
+            } else {
+                let orderItemExists = await db["OrderItem"].findOne({where: {
+                    orderId: data.orderId,
+                    productId: data.productId,
+                    id: {
+                        [Op.not]: req.params.orderItemId
+                }}})
+                if (orderItemExists === null) {
+                    await orderItem.update(data)
+                    res.status(200).json({message: "Successfully updated order item."})
+                } else {
+                    res.status(400).json({message: "Failed to update order item.", errors: ["Another order item with this product already exists on the provided order."]})
+                }
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update order.", errors: errors})
+        }
+    })
+app.delete("/orderitems/:orderItemId",
+    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let rowsDeleted = await db["OrderItem"].destroy({where: {
+                    id: req.params.orderItemId
+                }})
+            if (rowsDeleted !== 0) {
+                res.status(200).json({message: "Successfully deleted order item."})
+            } else {
+                res.status(404).json({message: "Failed to delete order item.", errors: ["Order with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete order item.", errors: errors})
+        }
+    }
+)
+
 
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
