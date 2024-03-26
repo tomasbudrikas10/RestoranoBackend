@@ -20,14 +20,12 @@ app.get('/products', async (req, res) => {
 
 app.post('/products',
     body('name')
-        .isAlphanumeric().withMessage("Name must be alphanumeric.")
-        .isLength({min: 8, max: 255}).withMessage("Name must be between 8 and 255 characters long."),
+        .trim().isLength({min: 8, max: 255}).withMessage("Name must be between 8 and 255 characters long."),
     body('description')
-        .isAlphanumeric().withMessage("Description must be alphanumeric.")
-        .isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
-    body('price').
-    isNumeric().withMessage("Price must be a number."),
-    body('isAvailable').isBoolean().withMessage("Availability must be a boolean."),
+        .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
+    body('price')
+        .trim().isNumeric().withMessage("Price must be a number."),
+    body('isAvailable').isBoolean().withMessage("isAvailable must be a boolean."),
     async (req, res) => {
     let result = validationResult(req)
     let data = matchedData(req)
@@ -73,13 +71,11 @@ app.get("/products/:productId", param("productId").isNumeric().withMessage("Prod
 app.put("/products/:productId",
     param("productId").isNumeric().withMessage("Product ID must be numeric."),
     body('name')
-        .isAlphanumeric().withMessage("Name must be alphanumeric.")
-        .isLength({min: 8, max: 255}).withMessage("Name must be between 8 and 255 characters long."),
+        .trim().isLength({min: 8, max: 255}).withMessage("Name must be between 8 and 255 characters long."),
     body('description')
-        .isAlphanumeric().withMessage("Description must be alphanumeric.")
-        .isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
-    body('price').
-    isNumeric().withMessage("Price must be a number."),
+        .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
+    body('price')
+        .trim().isNumeric().withMessage("Price must be a number."),
     body('isAvailable').isBoolean().withMessage("Availability must be a boolean."),
     async (req, res) => {
         let validationRes = validationResult(req)
