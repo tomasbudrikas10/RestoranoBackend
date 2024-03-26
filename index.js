@@ -14,8 +14,12 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/products', async (req, res) => {
-    let products = await db["Product"].findAll()
-    res.json(products)
+    try {
+        let products = await db["Product"].findAll()
+        res.status(200).json({message: "Successfully retrieved all products.", data: products})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all products.", errors: [e]})
+    }
 })
 
 app.post('/products',
@@ -27,44 +31,52 @@ app.post('/products',
         .trim().isNumeric().withMessage("Price must be a number."),
     body('isAvailable').isBoolean().withMessage("isAvailable must be a boolean."),
     async (req, res) => {
-    let result = validationResult(req)
-    let data = matchedData(req)
-    if (result.isEmpty()) {
-        let productNameExists = await db["Product"].findOne({where: {
-            name: data.name
-            }})
-        if (productNameExists === null) {
-            await db["Product"].create({
-                name: data.name,
-                description: data.description,
-                price: data.price,
-                isAvailable: data.isAvailable,
-            })
-            res.status(200).json({message: "Successfully created product."})
-        } else {
-            res.status(400).json({
-                message: "Failed to create product.",
-                errors: ["Product with that name already exists."]
-            })
+        try {
+            let result = validationResult(req)
+            let data = matchedData(req)
+            if (result.isEmpty()) {
+                let productNameExists = await db["Product"].findOne({where: {
+                        name: data.name
+                    }})
+                if (productNameExists === null) {
+                    await db["Product"].create({
+                        name: data.name,
+                        description: data.description,
+                        price: data.price,
+                        isAvailable: data.isAvailable,
+                    })
+                    res.status(200).json({message: "Successfully created product."})
+                } else {
+                    res.status(400).json({
+                        message: "Failed to create product.",
+                        errors: ["Product with that name already exists."]
+                    })
+                }
+            } else {
+                let errors = result.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create product.", errors: errors})
+            }
+        } catch (e) {
+            res.status(500).json({message: "Failed to create product.", errors: [e]})
         }
-    } else {
-        let errors = result.array().map((error => error.msg))
-        res.status(400).json({message: "Failed to create product.", errors: errors})
-    }
 })
 
 app.get("/products/:productId", param("productId").isNumeric().withMessage("Product ID must be numeric."), async (req, res) => {
-    let product = await db["Product"].findByPk(req.params.productId)
-    let validationRes = validationResult(req)
-    if (!validationRes.isEmpty()) {
-        let errors = validationRes.array().map((error => error.msg))
-        res.status(400).json({message: "Failed to retrieve product.", errors: errors})
-    } else {
-        if (product === null) {
-            res.status(404).json({message: "Failed to retrieve product.", errors: ["No product exists with provided ID."]})
+    try {
+        let product = await db["Product"].findByPk(req.params.productId)
+        let validationRes = validationResult(req)
+        if (!validationRes.isEmpty()) {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve product.", errors: errors})
         } else {
-            res.status(200).json({message: "Successfully retrieved product.", data: product})
+            if (product === null) {
+                res.status(404).json({message: "Failed to retrieve product.", errors: ["No product exists with provided ID."]})
+            } else {
+                res.status(200).json({message: "Successfully retrieved product.", data: product})
+            }
         }
+    } catch(e) {
+        res.status(500).json({message: "Failed to retrieve product.", errors: [e]})
     }
 })
 
@@ -78,54 +90,66 @@ app.put("/products/:productId",
         .trim().isNumeric().withMessage("Price must be a number."),
     body('isAvailable').isBoolean().withMessage("Availability must be a boolean."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let product = await db["Product"].findByPk(req.params.productId)
-            if (product === null) {
-                res.status(404).json({message: "Failed to update product.", errors: ["Product with provided ID doesn't exist."]})
-            } else {
-                let productNameExists = await db["Product"].findOne({where: {
-                        name: data.name,
-                        id: {
-                            [Op.not]: req.params.productId
-                        }
-                    }})
-                if (productNameExists === null) {
-                    await product.update(data)
-                    res.status(200).json({message: "Successfully updated product."})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let product = await db["Product"].findByPk(req.params.productId)
+                if (product === null) {
+                    res.status(404).json({message: "Failed to update product.", errors: ["Product with provided ID doesn't exist."]})
                 } else {
-                    res.status(400).json({message: "Failed to update product.", errors: ["Another product already has the provided name."]})
+                    let productNameExists = await db["Product"].findOne({where: {
+                            name: data.name,
+                            id: {
+                                [Op.not]: req.params.productId
+                            }
+                        }})
+                    if (productNameExists === null) {
+                        await product.update(data)
+                        res.status(200).json({message: "Successfully updated product."})
+                    } else {
+                        res.status(400).json({message: "Failed to update product.", errors: ["Another product already has the provided name."]})
+                    }
                 }
+            } else {
+                let errors = validationRes.array().map((err) => err.msg)
+                res.status(400).json({message: "Failed to update product.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((err) => err.msg)
-            res.status(400).json({message: "Failed to update product.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update product.", errors: [e]})
         }
     })
 
 app.delete("/products/:productId",
     param("productId").isNumeric().withMessage("Product ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let result = await db["Product"].destroy({where: {
-                id: req.params.productId
-            }})
-            if (result === 0) {
-                res.status(404).json({message: "Failed to delete product.", errors: ["Product with provided ID doesn't exist."]})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let result = await db["Product"].destroy({where: {
+                    id: req.params.productId
+                }})
+                if (result === 0) {
+                    res.status(404).json({message: "Failed to delete product.", errors: ["Product with provided ID doesn't exist."]})
+                } else {
+                    res.status(200).json({message: "Deleted product successfully."})
+                }
             } else {
-                res.status(200).json({message: "Deleted product successfully."})
+                let errors = validationRes.array().map((err) => err.msg)
+                res.status(400).json({message: "Failed to delete product.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((err) => err.msg)
-            res.status(400).json({message: "Failed to update product.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete product.", errors: [e]})
         }
     })
 
 app.get("/roles", async (req, res) => {
-    let roles = await db["Role"].findAll()
-    res.status(200).json(roles)
+    try {
+        let roles = await db["Role"].findAll()
+        res.status(200).json({message: "Retrieved all roles successfully.", data: roles})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all roles.", errors: [e]})
+    }
 })
 
 app.post("/roles",
@@ -133,39 +157,47 @@ app.post("/roles",
         .trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        let data = matchedData(req)
-        if (valResult.isEmpty()) {
-            let roleNameUsed = await db["Role"].findOne({where: {
-                    name: data.name
-                }})
-            if (roleNameUsed === null) {
-                await db["Role"].create({name: data.name})
-                res.status(200).json({message: "Successfully created role."})
-            } else {
-                res.status(400).json({message: "Failed to create role.", errors: ["Role name is already in use."]})
-            }
+        try {
+            let valResult = validationResult(req)
+            let data = matchedData(req)
+            if (valResult.isEmpty()) {
+                let roleNameUsed = await db["Role"].findOne({where: {
+                        name: data.name
+                    }})
+                if (roleNameUsed === null) {
+                    await db["Role"].create({name: data.name})
+                    res.status(200).json({message: "Successfully created role."})
+                } else {
+                    res.status(400).json({message: "Failed to create role.", errors: ["Role name is already in use."]})
+                }
 
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create role.", errors: errors})
+            } else {
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create role.", errors: errors})
+            }
+        } catch (e) {
+            res.status(500).json({message: "Failed to create role.", errors: [e]})
         }
 })
 
 app.get("/roles/:roleId",
     param("roleId").isNumeric().withMessage("Role ID must be numeric."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        if (valResult.isEmpty()) {
-            let role = await db["Role"].findByPk(req.params.roleId)
-            if (role !== null) {
-                res.status(200).json({message: "Successfully retrieved role.", data: role})
+        try {
+            let valResult = validationResult(req)
+            if (valResult.isEmpty()) {
+                let role = await db["Role"].findByPk(req.params.roleId)
+                if (role !== null) {
+                    res.status(200).json({message: "Successfully retrieved role.", data: role})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve role.", errors: ["No role exists with provided ID."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve role.", errors: ["No role exists with provided ID."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve role.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to retrieve role.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve role.", errors: [e]})
         }
     })
 
@@ -175,29 +207,33 @@ app.put("/roles/:roleId",
         .trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        let data = matchedData(req)
-        if (valResult.isEmpty()) {
-            let roleNameExists = await db["Role"].findOne({where: {
-                    name: data.name,
-                    id: {
-                        [Op.not]: req.params.roleId
+        try {
+            let valResult = validationResult(req)
+            let data = matchedData(req)
+            if (valResult.isEmpty()) {
+                let roleNameExists = await db["Role"].findOne({where: {
+                        name: data.name,
+                        id: {
+                            [Op.not]: req.params.roleId
+                        }
+                    }})
+                if (roleNameExists === null) {
+                    let role = await db["Role"].findByPk(req.params.roleId)
+                    if (role !== null) {
+                        await role.update(data)
+                        res.status(200).json({message: "Successfully updated role."})
+                    } else {
+                        res.status(404).json({message: "Failed to update role.", errors: ["Couldn't find provided role."]})
                     }
-                }})
-            if (roleNameExists === null) {
-                let role = await db["Role"].findByPk(req.params.roleId)
-                if (role !== null) {
-                    await role.update(data)
-                    res.status(200).json({message: "Successfully updated role."})
                 } else {
-                    res.status(404).json({message: "Failed to update role.", errors: ["Couldn't find provided role."]})
+                    res.status(400).json({message: "Failed to update role.", errors: ["Role name is already in use."]})
                 }
             } else {
-                res.status(400).json({message: "Failed to update role.", errors: ["Role name is already in use."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update role.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update role.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update role.", errors: [e]})
         }
     }
 )
@@ -205,27 +241,35 @@ app.put("/roles/:roleId",
 app.delete("/roles/:roleId",
     param("roleId").isNumeric().withMessage("Role ID must be numeric."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        if (valResult.isEmpty()) {
-            let rowsDeleted = await db["Role"].destroy({where: {
-                    id: req.params.roleId
-                }})
-            if (rowsDeleted !== 0) {
-                res.status(200).json({message: "Successfully deleted role."})
+        try {
+            let valResult = validationResult(req)
+            if (valResult.isEmpty()) {
+                let rowsDeleted = await db["Role"].destroy({where: {
+                        id: req.params.roleId
+                    }})
+                if (rowsDeleted !== 0) {
+                    res.status(200).json({message: "Successfully deleted role."})
+                } else {
+                    res.status(404).json({message: "Failed to delete role.", errors: ["No role exists with provided ID."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete role.", errors: ["No role exists with provided ID."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete role.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete role.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete role.", errors: [e]})
         }
     }
 )
 
 app.get("/users",
     async (req, res) => {
-        let users = await db["User"].findAll()
-        res.status(200).json({message: "Successfully retrieved all users.", data: users})
+        try {
+            let users = await db["User"].findAll()
+            res.status(200).json({message: "Successfully retrieved all users.", data: users})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve all users.", errors: [e]})
+        }
     })
 
 app.post("/users",
@@ -237,43 +281,51 @@ app.post("/users",
     body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
         .isNumeric().withMessage("Role ID must be numeric."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        let data = matchedData(req)
-        if (valResult.isEmpty()) {
-            let userNameExists = await db["User"].findOne({where: {
-                    name: data.name
-                }})
-            if (userNameExists === null) {
-                let roleExists = await db["Role"].findByPk(data.roleId)
-                if (roleExists !== null) {
-                    await db["User"].create(data)
-                    res.status(200).json({message: "Successfully created user."})
+        try {
+            let valResult = validationResult(req)
+            let data = matchedData(req)
+            if (valResult.isEmpty()) {
+                let userNameExists = await db["User"].findOne({where: {
+                        name: data.name
+                    }})
+                if (userNameExists === null) {
+                    let roleExists = await db["Role"].findByPk(data.roleId)
+                    if (roleExists !== null) {
+                        await db["User"].create(data)
+                        res.status(200).json({message: "Successfully created user."})
+                    } else {
+                        res.status(400).json({message: "Failed to create user.", errors: ["Provided role doesn't exist."]})
+                    }
                 } else {
-                    res.status(400).json({message: "Failed to create user.", errors: ["Provided role doesn't exist."]})
+                    res.status(400).json({message: "Failed to create user.", errors: ["A user with the provided name already exists."]})
                 }
             } else {
-                res.status(400).json({message: "Failed to create user.", errors: ["A user with the provided name already exists."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create user.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to create user.", errors: [e]})
         }
     })
 
 app.get("/users/:userId",
     param("userId").isNumeric().withMessage("User ID must be numeric."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        if (valResult.isEmpty()) {
-            let user = await db["User"].findByPk(req.params.userId)
-            if (user !== null) {
-                res.status(200).json({message: "Successfully retrieved user.", data: user})
+        try {
+            let valResult = validationResult(req)
+            if (valResult.isEmpty()) {
+                let user = await db["User"].findByPk(req.params.userId)
+                if (user !== null) {
+                    res.status(200).json({message: "Successfully retrieved user.", data: user})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve user.", errors: ["User with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve user.", errors: ["User with provided ID doesn't exist."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve user.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve user.", errors: [e]})
         }
     })
 
@@ -287,98 +339,118 @@ app.put("/users/:userId",
     body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
         .isNumeric().withMessage("Role ID must be numeric."),
     async (req, res) => {
-        let valResult = validationResult(req)
-        let data = matchedData(req)
-        if (valResult.isEmpty()) {
-            let userNameExists = await db["User"].findOne({where: {
-                    name: data.name,
-                    id: {
-                        [Op.not]: req.params.userId
-                    }
-                }})
-            if (userNameExists === null) {
-                let roleExists = await db["Role"].findByPk(data.roleId)
-                if (roleExists !== null) {
-                    let user = await db["User"].findByPk(req.params.userId)
-                    if (user !== null) {
-                        await user.update(data)
-                        res.status(200).json({message: "Successfully updated user."})
+        try {
+            let valResult = validationResult(req)
+            let data = matchedData(req)
+            if (valResult.isEmpty()) {
+                let userNameExists = await db["User"].findOne({where: {
+                        name: data.name,
+                        id: {
+                            [Op.not]: req.params.userId
+                        }
+                    }})
+                if (userNameExists === null) {
+                    let roleExists = await db["Role"].findByPk(data.roleId)
+                    if (roleExists !== null) {
+                        let user = await db["User"].findByPk(req.params.userId)
+                        if (user !== null) {
+                            await user.update(data)
+                            res.status(200).json({message: "Successfully updated user."})
+                        } else {
+                            res.status(404).json({message: "Failed to update user.", errors: ["No user found with provided ID."]})
+                        }
                     } else {
-                        res.status(404).json({message: "Failed to update user.", errors: ["No user found with provided ID."]})
+                        res.status(400).json({message: "Failed to update user.", errors: ["No role found with provided ID.."]})
                     }
                 } else {
-                    res.status(400).json({message: "Failed to update user.", errors: ["No role found with provided ID.."]})
+                    res.status(400).json({message: "Failed to update user.", errors: ["Provided name is already in use."]})
                 }
             } else {
-                res.status(400).json({message: "Failed to update user.", errors: ["Provided name is already in use."]})
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update user.", errors: errors})
             }
-        } else {
-            let errors = valResult.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update user.", errors: [e]})
         }
     })
 
 app.delete("/users/:userId",
     param("userId").isNumeric().withMessage("User ID must be numeric."),
     async (req, res) => {
-        let validatedRes = validationResult(req)
-        if (validatedRes.isEmpty()) {
-            let deletedCount = await db["User"].destroy({where: {
-                id: req.params.userId
-            }})
-            if (deletedCount !== 0) {
-                res.status(200).json({message: "Successfully deleted user."})
+        try {
+            let validatedRes = validationResult(req)
+            if (validatedRes.isEmpty()) {
+                let deletedCount = await db["User"].destroy({where: {
+                    id: req.params.userId
+                }})
+                if (deletedCount !== 0) {
+                    res.status(200).json({message: "Successfully deleted user."})
+                } else {
+                    res.status(404).json({message: "Failed to delete user.", errors: ["No user found with provided ID."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete user.", errors: ["No user found with provided ID."]})
+                let errors = validatedRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete user.", errors: errors})
             }
-        } else {
-            let errors = validatedRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete user.", errors: [e]})
         }
     }
 )
 
 app.get("/orderstates", async (req, res) => {
-    let orderstates = await db["OrderState"].findAll()
-    res.status(200).json({message: "Successfully retrieved all order states.", data: orderstates})
+    try {
+        let orderstates = await db["OrderState"].findAll()
+        res.status(200).json({message: "Successfully retrieved all order states.", data: orderstates})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all order states.", errors: [e]})
+    }
 })
 
 app.post("/orderstates",
     body("name").trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let orderStateExists = await db["OrderState"].findOne({where: {
-                name: data.name
-            }})
-            if (orderStateExists === null) {
-                await db["OrderState"].create(data)
-                res.status(200).json({message: "Successfully created order state."})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let orderStateExists = await db["OrderState"].findOne({where: {
+                    name: data.name
+                }})
+                if (orderStateExists === null) {
+                    await db["OrderState"].create(data)
+                    res.status(200).json({message: "Successfully created order state."})
+                } else {
+                    res.status(400).json({message: "Failed to create order state.", errors: ["Order state with provided name already exists."]})
+                }
             } else {
-                res.status(400).json({message: "Failed to create order state.", errors: ["Order state with provided name already exists."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create order state.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create order state.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to create order state.", errors: [e]})
         }
 })
 
 app.get("/orderstates/:orderStateId",
     param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let orderState = await db["OrderState"].findByPk(req.params.orderStateId)
-            if (orderState !== null) {
-                res.status(200).json({message: "Successfully retrieved order state.", data: orderState})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let orderState = await db["OrderState"].findByPk(req.params.orderStateId)
+                if (orderState !== null) {
+                    res.status(200).json({message: "Successfully retrieved order state.", data: orderState})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve order state.", errors: ["Order State with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve order state.", errors: ["Order State with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve order state.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to retrieve order state.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve order state.", errors: [e]})
         }
     }
 )
@@ -388,55 +460,67 @@ app.put("/orderstates/:orderStateId",
     body("name").trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let orderStateToUpdate = await db["OrderState"].findByPk(req.params.orderStateId)
-            if (orderStateToUpdate === null) {
-                res.status(404).json({message: "Failed to update order state.", errors: ["Couldn't find Order State with provided ID."]})
-            } else {
-                let orderStateNameExists = await db["OrderState"].findOne({where: {
-                        name: data.name,
-                        id: {
-                            [Op.not]: req.params.orderStateId
-                        }
-                    }})
-                if (orderStateNameExists === null) {
-                    await orderStateToUpdate.update(data)
-                    res.status(200).json({message: "Successfully updated order state."})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let orderStateToUpdate = await db["OrderState"].findByPk(req.params.orderStateId)
+                if (orderStateToUpdate === null) {
+                    res.status(404).json({message: "Failed to update order state.", errors: ["Couldn't find Order State with provided ID."]})
                 } else {
-                    res.status(400).json({message: "Failed to update order state.", errors: ["Another Order State is already using that name."]})
+                    let orderStateNameExists = await db["OrderState"].findOne({where: {
+                            name: data.name,
+                            id: {
+                                [Op.not]: req.params.orderStateId
+                            }
+                        }})
+                    if (orderStateNameExists === null) {
+                        await orderStateToUpdate.update(data)
+                        res.status(200).json({message: "Successfully updated order state."})
+                    } else {
+                        res.status(400).json({message: "Failed to update order state.", errors: ["Another Order State is already using that name."]})
+                    }
                 }
+            } else {
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update order state.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update order state.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update order state.", errors: [e]})
         }
     })
 
 app.delete("/orderstates/:orderStateId",
     param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let rowsDeleted = await db["OrderState"].destroy({where: {
-                    id: req.params.orderStateId
-                }})
-            if (rowsDeleted !== 0) {
-                res.status(200).json({message: "Successfully deleted order state."})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let rowsDeleted = await db["OrderState"].destroy({where: {
+                        id: req.params.orderStateId
+                    }})
+                if (rowsDeleted !== 0) {
+                    res.status(200).json({message: "Successfully deleted order state."})
+                } else {
+                    res.status(404).json({message: "Failed to delete order state.", errors: ["Order State with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete order state.", errors: ["Order State with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete order state.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete order state.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete order state.", errors: [e]})
         }
     }
 )
 
 app.get("/orders", async (req, res) => {
-    let orders = await db["Order"].findAll()
-    res.status(200).json({message: "Successfully retrieved all orders.", data: orders})
+    try {
+        let orders = await db["Order"].findAll()
+        res.status(200).json({message: "Successfully retrieved all orders.", data: orders})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all orders.", errors: [e]})
+    }
 })
 
 app.post("/orders",
@@ -445,36 +529,44 @@ app.post("/orders",
     body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
         .isDate().withMessage("Order date must be a valid date."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let userExists = await db["User"].findByPk(data.userId)
-            if (userExists === null) {
-                res.status(400).json({message: "Failed to create order.", errors: ["Provided user doesn't exist."]})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let userExists = await db["User"].findByPk(data.userId)
+                if (userExists === null) {
+                    res.status(400).json({message: "Failed to create order.", errors: ["Provided user doesn't exist."]})
+                } else {
+                    await db["Order"].create({...data, stateId: 1})
+                    res.status(200).json({message: "Successfully created order."})
+                }
             } else {
-                await db["Order"].create({...data, stateId: 1})
-                res.status(200).json({message: "Successfully created order."})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create order.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to create order.", errors: [e]})
         }
 })
 
 app.get("/orders/:orderId",
     param("orderId").isNumeric().withMessage("Order ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let order = await db["Order"].findByPk(req.params.orderId)
-            if (order !== null) {
-                res.status(200).json({message: "Successfully retrieved order.", data: order})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let order = await db["Order"].findByPk(req.params.orderId)
+                if (order !== null) {
+                    res.status(200).json({message: "Successfully retrieved order.", data: order})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve order.", errors: ["Order with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve order.", errors: ["Order with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve order.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to retrieve order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve order.", errors: [e]})
         }
     }
 )
@@ -486,48 +578,60 @@ app.put("/orders/:orderId",
     body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
         .isDate().withMessage("Order date must be a valid date."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let orderStateExists = await db["OrderState"].findByPk(data.stateId)
-            let order = await db["Order"].findByPk(req.params.orderId)
-            if (orderStateExists === null) {
-                res.status(400).json({message: "Failed to update order.", errors: ["Provided order state doesn't exist."]})
-            } else if (order === null) {
-                res.status(404).json({message: "Failed to update order.", errors: ["Provided order doesn't exist."]})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let orderStateExists = await db["OrderState"].findByPk(data.stateId)
+                let order = await db["Order"].findByPk(req.params.orderId)
+                if (orderStateExists === null) {
+                    res.status(400).json({message: "Failed to update order.", errors: ["Provided order state doesn't exist."]})
+                } else if (order === null) {
+                    res.status(404).json({message: "Failed to update order.", errors: ["Provided order doesn't exist."]})
+                } else {
+                    await order.update(data)
+                    res.status(200).json({message: "Successfully updated order."})
+                }
             } else {
-                await order.update(data)
-                res.status(200).json({message: "Successfully updated order."})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update order.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update order.", errors: [e]})
         }
     })
 
 app.delete("/orders/:orderId",
     param("orderId").isNumeric().withMessage("Order ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let rowsDeleted = await db["Order"].destroy({where: {
-                    id: req.params.orderId
-                }})
-            if (rowsDeleted !== 0) {
-                res.status(200).json({message: "Successfully deleted order."})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let rowsDeleted = await db["Order"].destroy({where: {
+                        id: req.params.orderId
+                    }})
+                if (rowsDeleted !== 0) {
+                    res.status(200).json({message: "Successfully deleted order."})
+                } else {
+                    res.status(404).json({message: "Failed to delete order.", errors: ["Order with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete order.", errors: ["Order with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete order.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete order.", errors: [e]})
         }
     }
 )
 
 app.get("/orderitems", async (req, res) => {
-    let orderitems = await db["OrderItem"].findAll()
-    res.status(200).json({message: "Successfully retrieved all order items for all orders.", data: orderitems})
+    try {
+        let orderitems = await db["OrderItem"].findAll()
+        res.status(200).json({message: "Successfully retrieved all order items for all orders.", data: orderitems})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all order items for all orders.", errors: [e]})
+    }
 })
 
 app.post("/orderitems",
@@ -538,47 +642,55 @@ app.post("/orderitems",
     body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
         .isNumeric().withMessage("Quantity must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let orderExists = await db["Order"].findByPk(data.orderId)
-            let productExists = await db["Product"].findByPk(data.productId)
-            if (orderExists === null) {
-                res.status(400).json({message: "Failed to create order item.", errors: ["The provided order doesn't exist."]})
-            } else if (productExists === null) {
-                res.status(400).json({message: "Failed to create order item.", errors: ["The provided product doesn't exist."]})
-            } else {
-                let orderItemExists = await db["OrderItem"].findOne({where: {
-                    orderId: data.orderId,
-                    productId: data.productId
-                }})
-                if (orderItemExists === null) {
-                    await db["OrderItem"].create(data)
-                    res.status(200).json({message: "Successfully created order item."})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let orderExists = await db["Order"].findByPk(data.orderId)
+                let productExists = await db["Product"].findByPk(data.productId)
+                if (orderExists === null) {
+                    res.status(400).json({message: "Failed to create order item.", errors: ["The provided order doesn't exist."]})
+                } else if (productExists === null) {
+                    res.status(400).json({message: "Failed to create order item.", errors: ["The provided product doesn't exist."]})
                 } else {
-                    res.status(400).json({message: "Failed to create order item.", errors: ["An order item with this product already exists on the provided order."]})
+                    let orderItemExists = await db["OrderItem"].findOne({where: {
+                        orderId: data.orderId,
+                        productId: data.productId
+                    }})
+                    if (orderItemExists === null) {
+                        await db["OrderItem"].create(data)
+                        res.status(200).json({message: "Successfully created order item."})
+                    } else {
+                        res.status(400).json({message: "Failed to create order item.", errors: ["An order item with this product already exists on the provided order."]})
+                    }
                 }
+            } else {
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to create order item.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to create order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to create order item.", errors: [e]})
         }
 })
 
 app.get("/orderitems/:orderItemId",
     param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
-            if (orderItem !== null) {
-                res.status(200).json({message: "Successfully retrieved order item.", data: orderItem})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
+                if (orderItem !== null) {
+                    res.status(200).json({message: "Successfully retrieved order item.", data: orderItem})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve order item.", errors: ["Order item with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve order item.", errors: ["Order item with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve order item.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to retrieve order item.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve order item.", errors: [e]})
         }
     }
 )
@@ -590,57 +702,69 @@ app.put("/orderitems/:orderItemId",
     body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
         .isNumeric().withMessage("Quantity must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let productExists = await db["Product"].findByPk(data.productId)
-            let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
-            if (productExists === null) {
-                res.status(400).json({message: "Failed to update order item.", errors: ["The provided product doesn't exist."]})
-            } else if (orderItem === null) {
-                res.status(404).json({message: "Failed to update order item.", errors: ["The provided order item doesn't exist."]})
-            } else {
-                let orderItemExists = await db["OrderItem"].findOne({where: {
-                    orderId: orderItem.orderId,
-                    productId: data.productId,
-                    id: {
-                        [Op.not]: req.params.orderItemId
-                }}})
-                if (orderItemExists === null) {
-                    await orderItem.update(data)
-                    res.status(200).json({message: "Successfully updated order item."})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let productExists = await db["Product"].findByPk(data.productId)
+                let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
+                if (productExists === null) {
+                    res.status(400).json({message: "Failed to update order item.", errors: ["The provided product doesn't exist."]})
+                } else if (orderItem === null) {
+                    res.status(404).json({message: "Failed to update order item.", errors: ["The provided order item doesn't exist."]})
                 } else {
-                    res.status(400).json({message: "Failed to update order item.", errors: ["Another order item with this product already exists on the provided order."]})
+                    let orderItemExists = await db["OrderItem"].findOne({where: {
+                        orderId: orderItem.orderId,
+                        productId: data.productId,
+                        id: {
+                            [Op.not]: req.params.orderItemId
+                    }}})
+                    if (orderItemExists === null) {
+                        await orderItem.update(data)
+                        res.status(200).json({message: "Successfully updated order item."})
+                    } else {
+                        res.status(400).json({message: "Failed to update order item.", errors: ["Another order item with this product already exists on the provided order."]})
+                    }
                 }
+            } else {
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update order item.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update order.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update order item.", errors: [e]})
         }
     })
 app.delete("/orderitems/:orderItemId",
     param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let rowsDeleted = await db["OrderItem"].destroy({where: {
-                    id: req.params.orderItemId
-                }})
-            if (rowsDeleted !== 0) {
-                res.status(200).json({message: "Successfully deleted order item."})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let rowsDeleted = await db["OrderItem"].destroy({where: {
+                        id: req.params.orderItemId
+                    }})
+                if (rowsDeleted !== 0) {
+                    res.status(200).json({message: "Successfully deleted order item."})
+                } else {
+                    res.status(404).json({message: "Failed to delete order item.", errors: ["Order with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete order item.", errors: ["Order with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete order item.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete order item.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete order item.", errors: [e]})
         }
     }
 )
 
 app.get("/userpaymentmethods", async (req, res) => {
-    let userPaymentMethods = await db["UserPaymentMethod"].findAll()
-    res.status(200).json({message: "Successfully retrieved all user payment methods for all users.", data: userPaymentMethods})
+    try {
+        let userPaymentMethods = await db["UserPaymentMethod"].findAll()
+        res.status(200).json({message: "Successfully retrieved all user payment methods for all users.", data: userPaymentMethods})
+    } catch (e) {
+        res.status(500).json({message: "Failed to retrieve all user payment methods for all users.", errors: [e]})
+    }
 })
 
 app.post("/userpaymentmethods",
@@ -655,54 +779,62 @@ app.post("/userpaymentmethods",
     body('expiryDate').trim().notEmpty().withMessage("Expiry date must not be empty.")
         .isDate().withMessage("Expiry date must be a valid date."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let userExists = await db["User"].findByPk(data.userId)
-            let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
-                    cardNumber: data.cardNumber,
-                    userId: data.userId,
-                }})
-            if (userExists === null) {
-                res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user doesn't exist."]})
-            } else if (cardNumberExists !== null) {
-                res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user already added this card."]})
-            } else {
-                let expiryDate = new Date(data.expiryDate)
-                let currentDate = new Date()
-
-                expiryDate.setHours(0, 0, 0, 0);
-                currentDate.setHours(0, 0, 0, 0);
-                expiryDate.setDate(1)
-                currentDate.setDate(1)
-
-                if (expiryDate < currentDate) {
-                    res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided expiry date has already passed."]})
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let userExists = await db["User"].findByPk(data.userId)
+                let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
+                        cardNumber: data.cardNumber,
+                        userId: data.userId,
+                    }})
+                if (userExists === null) {
+                    res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user doesn't exist."]})
+                } else if (cardNumberExists !== null) {
+                    res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user already added this card."]})
                 } else {
-                    await db["UserPaymentMethod"].create(data)
-                    res.status(200).json({message: "Successfully added user payment method for user."})
+                    let expiryDate = new Date(data.expiryDate)
+                    let currentDate = new Date()
+
+                    expiryDate.setHours(0, 0, 0, 0);
+                    currentDate.setHours(0, 0, 0, 0);
+                    expiryDate.setDate(1)
+                    currentDate.setDate(1)
+
+                    if (expiryDate < currentDate) {
+                        res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided expiry date has already passed."]})
+                    } else {
+                        await db["UserPaymentMethod"].create(data)
+                        res.status(200).json({message: "Successfully added user payment method for user."})
+                    }
                 }
+            } else {
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to add user payment method for user.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to add user payment method for user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to add user payment method for user.", errors: [e]})
         }
 })
 
 app.get("/userpaymentmethods/:userPaymentMethodId",
     param("userPaymentMethodId").isInt().withMessage("User Payment Method ID must be an integer."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let userPaymentMethod = await db["UserPaymentMethod"].findByPk(req.params.userPaymentMethodId)
-            if (userPaymentMethod !== null) {
-                res.status(200).json({message: "Successfully retrieved user payment method.", data: userPaymentMethod})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let userPaymentMethod = await db["UserPaymentMethod"].findByPk(req.params.userPaymentMethodId)
+                if (userPaymentMethod !== null) {
+                    res.status(200).json({message: "Successfully retrieved user payment method.", data: userPaymentMethod})
+                } else {
+                    res.status(404).json({message: "Failed to retrieve user payment method.", errors: ["User Payment Method with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to retrieve user payment method.", errors: ["User Payment Method with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to retrieve user payment method.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to retrieve user payment method.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to retrieve user payment method.", errors: [e]})
         }
     }
 )
@@ -718,63 +850,71 @@ app.put("/userpaymentmethods/:userPaymentMethodId",
     body('expiryDate').trim().notEmpty().withMessage("Expiry date must not be empty.")
         .isDate().withMessage("Expiry date must be a valid date."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        let data = matchedData(req)
-        if (validationRes.isEmpty()) {
-            let paymentMethod = await db["UserPaymentMethod"].findOne({where: {
-                    id: req.params.userPaymentMethodId
-                }})
-             if (paymentMethod === null) {
-                res.status(404).json({message: "Failed to update user payment method for user.", errors: ["Provided payment method doesn't exist."]})
-            } else {
-                let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
-                        cardNumber: data.cardNumber,
-                        userId: paymentMethod.userId,
-                        id: {
-                            [Op.not]: req.params.userPaymentMethodId
-                        }
+        try {
+            let validationRes = validationResult(req)
+            let data = matchedData(req)
+            if (validationRes.isEmpty()) {
+                let paymentMethod = await db["UserPaymentMethod"].findOne({where: {
+                        id: req.params.userPaymentMethodId
                     }})
-                if (cardNumberExists !== null) {
-                    res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided user already added this card."]})
+                 if (paymentMethod === null) {
+                    res.status(404).json({message: "Failed to update user payment method for user.", errors: ["Provided payment method doesn't exist."]})
                 } else {
-                    let expiryDate = new Date(data.expiryDate)
-                    let currentDate = new Date()
-
-                    expiryDate.setHours(0, 0, 0, 0);
-                    currentDate.setHours(0, 0, 0, 0);
-                    expiryDate.setDate(1)
-                    currentDate.setDate(1)
-
-                    if (expiryDate < currentDate) {
-                        res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided expiry date has already passed."]})
+                    let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
+                            cardNumber: data.cardNumber,
+                            userId: paymentMethod.userId,
+                            id: {
+                                [Op.not]: req.params.userPaymentMethodId
+                            }
+                        }})
+                    if (cardNumberExists !== null) {
+                        res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided user already added this card."]})
                     } else {
-                        await paymentMethod.update(data)
-                        res.status(200).json({message: "Successfully updated user payment method for user."})
+                        let expiryDate = new Date(data.expiryDate)
+                        let currentDate = new Date()
+
+                        expiryDate.setHours(0, 0, 0, 0);
+                        currentDate.setHours(0, 0, 0, 0);
+                        expiryDate.setDate(1)
+                        currentDate.setDate(1)
+
+                        if (expiryDate < currentDate) {
+                            res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided expiry date has already passed."]})
+                        } else {
+                            await paymentMethod.update(data)
+                            res.status(200).json({message: "Successfully updated user payment method for user."})
+                        }
                     }
                 }
+            } else {
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to update user payment method for user.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to update user payment method for user.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to update user payment method for user.", errors: [e]})
         }
     })
 
 app.delete("/userpaymentmethods/:userPaymentMethodId",
     param("userPaymentMethodId").isInt().withMessage("User Payment Method ID must be an integer."),
     async (req, res) => {
-        let validationRes = validationResult(req)
-        if (validationRes.isEmpty()) {
-            let rowsDeleted = await db["UserPaymentMethod"].destroy({where: {
-                    id: req.params.userPaymentMethodId
-                }})
-            if (rowsDeleted !== 0) {
-                res.status(200).json({message: "Successfully deleted user payment method."})
+        try {
+            let validationRes = validationResult(req)
+            if (validationRes.isEmpty()) {
+                let rowsDeleted = await db["UserPaymentMethod"].destroy({where: {
+                        id: req.params.userPaymentMethodId
+                    }})
+                if (rowsDeleted !== 0) {
+                    res.status(200).json({message: "Successfully deleted user payment method."})
+                } else {
+                    res.status(404).json({message: "Failed to delete user payment method.", errors: ["User payment method with provided ID doesn't exist."]})
+                }
             } else {
-                res.status(404).json({message: "Failed to delete user payment method.", errors: ["User payment method with provided ID doesn't exist."]})
+                let errors = validationRes.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to delete user payment method.", errors: errors})
             }
-        } else {
-            let errors = validationRes.array().map((error => error.msg))
-            res.status(400).json({message: "Failed to delete user payment method.", errors: errors})
+        } catch (e) {
+            res.status(500).json({message: "Failed to delete user payment method.", errors: [e]})
         }
     }
 )
