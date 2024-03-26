@@ -649,6 +649,146 @@ app.delete("/orderitems/:orderItemId",
     }
 )
 
+app.get("/userpaymentmethods", async (req, res) => {
+    let userPaymentMethods = await db["UserPaymentMethod"].findAll()
+    res.status(200).json({message: "Successfully retrieved all user payment methods for all users.", data: userPaymentMethods})
+})
+
+app.post("/userpaymentmethods",
+    body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
+        .isNumeric().withMessage("User ID must be numeric."),
+    body("cardNumber").trim().notEmpty().withMessage("Card number must not be empty.")
+        .customSanitizer((value) => {
+            return value.replace(/\s/g, '');
+        }).isCreditCard().withMessage("Card number must be valid."),
+    body('cvc').isInt().withMessage("CVC must be an integer.")
+        .isLength({ min: 3, max: 4 }).withMessage('CVC must be 3 or 4 digits'),
+    body('expiryDate').trim().notEmpty().withMessage("Expiry date must not be empty.")
+        .isDate().withMessage("Expiry date must be a valid date."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let userExists = await db["User"].findByPk(data.userId)
+            let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
+                    cardNumber: data.cardNumber,
+                    userId: data.userId,
+                }})
+            if (userExists === null) {
+                res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user doesn't exist."]})
+            } else if (cardNumberExists !== null) {
+                res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided user already added this card."]})
+            } else {
+                let expiryDate = new Date(data.expiryDate)
+                let currentDate = new Date()
+
+                expiryDate.setHours(0, 0, 0, 0);
+                currentDate.setHours(0, 0, 0, 0);
+                expiryDate.setDate(1)
+                currentDate.setDate(1)
+
+                if (expiryDate < currentDate) {
+                    res.status(400).json({message: "Failed to add user payment method for user.", errors: ["Provided expiry date has already passed."]})
+                } else {
+                    await db["UserPaymentMethod"].create(data)
+                    res.status(200).json({message: "Successfully added user payment method for user."})
+                }
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to add user payment method for user.", errors: errors})
+        }
+})
+
+app.get("/userpaymentmethods/:userPaymentMethodId",
+    param("userPaymentMethodId").isInt().withMessage("User Payment Method ID must be an integer."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let userPaymentMethod = await db["UserPaymentMethod"].findByPk(req.params.userPaymentMethodId)
+            if (userPaymentMethod !== null) {
+                res.status(200).json({message: "Successfully retrieved user payment method.", data: userPaymentMethod})
+            } else {
+                res.status(404).json({message: "Failed to retrieve user payment method.", errors: ["User Payment Method with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve user payment method.", errors: errors})
+        }
+    }
+)
+
+app.put("/userpaymentmethods/:userPaymentMethodId",
+    param("userPaymentMethodId").isInt().withMessage("User Payment Method ID must be an integer."),
+    body("cardNumber").trim().notEmpty().withMessage("Card number must not be empty.")
+        .customSanitizer((value) => {
+        return value.replace(/\s/g, '');
+    }).isCreditCard().withMessage("Card number must be valid."),
+    body('cvc').isInt().withMessage("CVC must be an integer.")
+        .isLength({ min: 3, max: 4 }).withMessage('CVC must be 3 or 4 digits'),
+    body('expiryDate').trim().notEmpty().withMessage("Expiry date must not be empty.")
+        .isDate().withMessage("Expiry date must be a valid date."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let paymentMethod = await db["UserPaymentMethod"].findOne({where: {
+                    id: req.params.userPaymentMethodId
+                }})
+             if (paymentMethod === null) {
+                res.status(404).json({message: "Failed to update user payment method for user.", errors: ["Provided payment method doesn't exist."]})
+            } else {
+                let cardNumberExists = await db["UserPaymentMethod"].findOne({where: {
+                        cardNumber: data.cardNumber,
+                        userId: paymentMethod.userId,
+                        id: {
+                            [Op.not]: req.params.userPaymentMethodId
+                        }
+                    }})
+                if (cardNumberExists !== null) {
+                    res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided user already added this card."]})
+                } else {
+                    let expiryDate = new Date(data.expiryDate)
+                    let currentDate = new Date()
+
+                    expiryDate.setHours(0, 0, 0, 0);
+                    currentDate.setHours(0, 0, 0, 0);
+                    expiryDate.setDate(1)
+                    currentDate.setDate(1)
+
+                    if (expiryDate < currentDate) {
+                        res.status(400).json({message: "Failed to update user payment method for user.", errors: ["Provided expiry date has already passed."]})
+                    } else {
+                        await paymentMethod.update(data)
+                        res.status(200).json({message: "Successfully updated user payment method for user."})
+                    }
+                }
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update user payment method for user.", errors: errors})
+        }
+    })
+
+app.delete("/userpaymentmethods/:userPaymentMethodId",
+    param("userPaymentMethodId").isInt().withMessage("User Payment Method ID must be an integer."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let rowsDeleted = await db["UserPaymentMethod"].destroy({where: {
+                    id: req.params.userPaymentMethodId
+                }})
+            if (rowsDeleted !== 0) {
+                res.status(200).json({message: "Successfully deleted user payment method."})
+            } else {
+                res.status(404).json({message: "Failed to delete user payment method.", errors: ["User payment method with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete user payment method.", errors: errors})
+        }
+    }
+)
 
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
