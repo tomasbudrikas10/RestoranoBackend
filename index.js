@@ -481,8 +481,6 @@ app.get("/orders/:orderId",
 
 app.put("/orders/:orderId",
     param("orderId").isNumeric().withMessage("Order ID must be numeric."),
-    body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
-        .isNumeric().withMessage("User ID must be numeric."),
     body("stateId").trim().notEmpty().withMessage("Order State ID must not be empty.")
         .isNumeric().withMessage("Order State ID must be numeric."),
     body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
@@ -491,13 +489,9 @@ app.put("/orders/:orderId",
         let validationRes = validationResult(req)
         let data = matchedData(req)
         if (validationRes.isEmpty()) {
-            let userExists = await db["User"].findByPk(data.userId)
             let orderStateExists = await db["OrderState"].findByPk(data.stateId)
             let order = await db["Order"].findByPk(req.params.orderId)
-            if (userExists === null) {
-                res.status(400).json({message: "Failed to update order.", errors: ["Provided user doesn't exist."]})
-            }
-            else if (orderStateExists === null) {
+            if (orderStateExists === null) {
                 res.status(400).json({message: "Failed to update order.", errors: ["Provided order state doesn't exist."]})
             } else if (order === null) {
                 res.status(404).json({message: "Failed to update order.", errors: ["Provided order doesn't exist."]})
@@ -591,8 +585,6 @@ app.get("/orderitems/:orderItemId",
 
 app.put("/orderitems/:orderItemId",
     param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
-    body("orderId").trim().notEmpty().withMessage("Order ID must not be empty.")
-        .isNumeric().withMessage("Order ID must be numeric."),
     body("productId").trim().notEmpty().withMessage("Product ID must not be empty.")
         .isNumeric().withMessage("Product ID must be numeric."),
     body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
@@ -601,18 +593,15 @@ app.put("/orderitems/:orderItemId",
         let validationRes = validationResult(req)
         let data = matchedData(req)
         if (validationRes.isEmpty()) {
-            let orderExists = await db["Order"].findByPk(data.orderId)
             let productExists = await db["Product"].findByPk(data.productId)
             let orderItem = await db["OrderItem"].findByPk(req.params.orderItemId)
-            if (orderExists === null) {
-                res.status(400).json({message: "Failed to update order item.", errors: ["The provided order doesn't exist."]})
-            } else if (productExists === null) {
+            if (productExists === null) {
                 res.status(400).json({message: "Failed to update order item.", errors: ["The provided product doesn't exist."]})
             } else if (orderItem === null) {
                 res.status(404).json({message: "Failed to update order item.", errors: ["The provided order item doesn't exist."]})
             } else {
                 let orderItemExists = await db["OrderItem"].findOne({where: {
-                    orderId: data.orderId,
+                    orderId: orderItem.orderId,
                     productId: data.productId,
                     id: {
                         [Op.not]: req.params.orderItemId
