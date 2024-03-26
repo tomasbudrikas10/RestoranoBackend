@@ -222,6 +222,122 @@ app.delete("/roles/:roleId",
     }
 )
 
+app.get("/users",
+    async (req, res) => {
+        let users = await db["User"].findAll()
+        res.status(200).json({message: "Successfully retrieved all users.", data: users})
+    })
+
+app.post("/users",
+    body("name").trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
+    body("password").trim().notEmpty().withMessage("Password must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
+    body("location").optional().trim().notEmpty().withMessage("Location must not be empty."),
+    body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
+        .isNumeric().withMessage("Role ID must be numeric."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        let data = matchedData(req)
+        if (valResult.isEmpty()) {
+            let userNameExists = await db["User"].findOne({where: {
+                    name: data.name
+                }})
+            if (userNameExists === null) {
+                let roleExists = await db["Role"].findByPk(data.roleId)
+                if (roleExists !== null) {
+                    await db["User"].create(data)
+                    res.status(200).json({message: "Successfully created user."})
+                } else {
+                    res.status(400).json({message: "Failed to create user.", errors: ["Provided role doesn't exist."]})
+                }
+            } else {
+                res.status(400).json({message: "Failed to create user.", errors: ["A user with the provided name already exists."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create user.", errors: errors})
+        }
+    })
+
+app.get("/users/:userId",
+    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        if (valResult.isEmpty()) {
+            let user = await db["User"].findByPk(req.params.userId)
+            if (user !== null) {
+                res.status(200).json({message: "Successfully retrieved user.", data: user})
+            } else {
+                res.status(404).json({message: "Failed to retrieve user.", errors: ["User with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create user.", errors: errors})
+        }
+    })
+
+app.put("/users/:userId",
+    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    body("name").trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
+    body("password").trim().notEmpty().withMessage("Password must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
+    body("location").optional().trim().notEmpty().withMessage("Location must not be empty."),
+    body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
+        .isNumeric().withMessage("Role ID must be numeric."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        let data = matchedData(req)
+        if (valResult.isEmpty()) {
+            let userNameExists = await db["User"].findOne({where: {
+                    name: data.name,
+                    id: {
+                        [Op.not]: req.params.userId
+                    }
+                }})
+            if (userNameExists === null) {
+                let roleExists = await db["Role"].findByPk(data.roleId)
+                if (roleExists !== null) {
+                    let user = await db["User"].findByPk(req.params.userId)
+                    if (user !== null) {
+                        await user.update(data)
+                        res.status(200).json({message: "Successfully updated user."})
+                    } else {
+                        res.status(404).json({message: "Failed to update user.", errors: ["No user found with provided ID."]})
+                    }
+                } else {
+                    res.status(400).json({message: "Failed to update user.", errors: ["No role found with provided ID.."]})
+                }
+            } else {
+                res.status(400).json({message: "Failed to update user.", errors: ["Provided name is already in use."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update user.", errors: errors})
+        }
+    })
+
+app.delete("/users/:userId",
+    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    async (req, res) => {
+        let validatedRes = validationResult(req)
+        if (validatedRes.isEmpty()) {
+            let deletedCount = await db["User"].destroy({where: {
+                id: req.params.userId
+            }})
+            if (deletedCount !== 0) {
+                res.status(200).json({message: "Successfully deleted user."})
+            } else {
+                res.status(404).json({message: "Failed to delete user.", errors: ["No user found with provided ID."]})
+            }
+        } else {
+            let errors = validatedRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete user.", errors: errors})
+        }
+    }
+)
+
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
     try {
