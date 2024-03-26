@@ -127,6 +127,105 @@ app.delete("/products/:productId",
         }
     })
 
+app.get("/roles", async (req, res) => {
+    let roles = await db["Role"].findAll()
+    res.status(200).json(roles)
+})
+
+app.post("/roles",
+    body("name")
+        .trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        let data = matchedData(req)
+        if (valResult.isEmpty()) {
+            let roleNameUsed = await db["Role"].findOne({where: {
+                    name: data.name
+                }})
+            if (roleNameUsed === null) {
+                await db["Role"].create({name: data.name})
+                res.status(200).json({message: "Successfully created role."})
+            } else {
+                res.status(400).json({message: "Failed to create role.", errors: ["Role name is already in use."]})
+            }
+
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create role.", errors: errors})
+        }
+})
+
+app.get("/roles/:roleId",
+    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        if (valResult.isEmpty()) {
+            let role = await db["Role"].findByPk(req.params.roleId)
+            if (role !== null) {
+                res.status(200).json({message: "Successfully retrieved role.", data: role})
+            } else {
+                res.status(404).json({message: "Failed to retrieve role.", errors: ["No role exists with provided ID."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve role.", errors: errors})
+        }
+    })
+
+app.put("/roles/:roleId",
+    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    body("name")
+        .trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        let data = matchedData(req)
+        if (valResult.isEmpty()) {
+            let roleNameExists = await db["Role"].findOne({where: {
+                    name: data.name,
+                    id: {
+                        [Op.not]: req.params.roleId
+                    }
+                }})
+            if (roleNameExists === null) {
+                let role = await db["Role"].findByPk(req.params.roleId)
+                if (role !== null) {
+                    await role.update(data)
+                    res.status(200).json({message: "Successfully updated role."})
+                } else {
+                    res.status(404).json({message: "Failed to update role.", errors: ["Couldn't find provided role."]})
+                }
+            } else {
+                res.status(400).json({message: "Failed to update role.", errors: ["Role name is already in use."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update role.", errors: errors})
+        }
+    }
+)
+
+app.delete("/roles/:roleId",
+    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    async (req, res) => {
+        let valResult = validationResult(req)
+        if (valResult.isEmpty()) {
+            let rowsDeleted = await db["Role"].destroy({where: {
+                    id: req.params.roleId
+                }})
+            if (rowsDeleted !== 0) {
+                res.status(200).json({message: "Successfully deleted role."})
+            } else {
+                res.status(404).json({message: "Failed to delete role.", errors: ["No role exists with provided ID."]})
+            }
+        } else {
+            let errors = valResult.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete role.", errors: errors})
+        }
+    }
+)
+
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
     try {
