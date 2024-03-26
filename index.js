@@ -338,12 +338,12 @@ app.delete("/users/:userId",
     }
 )
 
-app.get("/orderstate", async (req, res) => {
+app.get("/orderstates", async (req, res) => {
     let orderstates = await db["OrderState"].findAll()
     res.status(200).json({message: "Successfully retrieved all order states.", data: orderstates})
 })
 
-app.post("/orderstate",
+app.post("/orderstates",
     body("name").trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
@@ -364,6 +364,75 @@ app.post("/orderstate",
             res.status(400).json({message: "Failed to create order state.", errors: errors})
         }
 })
+
+app.get("/orderstates/:orderStateId",
+    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let orderState = await db["OrderState"].findByPk(req.params.orderStateId)
+            if (orderState !== null) {
+                res.status(200).json({message: "Successfully retrieved order state.", data: orderState})
+            } else {
+                res.status(404).json({message: "Failed to retrieve order state.", errors: ["Order State with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve order state.", errors: errors})
+        }
+    }
+)
+
+app.put("/orderstates/:orderStateId",
+    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    body("name").trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let orderStateToUpdate = await db["OrderState"].findByPk(req.params.orderStateId)
+            if (orderStateToUpdate === null) {
+                res.status(404).json({message: "Failed to update order state.", errors: ["Couldn't find Order State with provided ID."]})
+            } else {
+                let orderStateNameExists = await db["OrderState"].findOne({where: {
+                        name: data.name,
+                        id: {
+                            [Op.not]: req.params.orderStateId
+                        }
+                    }})
+                if (orderStateNameExists === null) {
+                    await orderStateToUpdate.update(data)
+                    res.status(200).json({message: "Successfully updated order state."})
+                } else {
+                    res.status(400).json({message: "Failed to update order state.", errors: ["Another Order State is already using that name."]})
+                }
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update order state.", errors: errors})
+        }
+    })
+
+app.delete("/orderstates/:orderStateId",
+    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let rowsDeleted = await db["OrderState"].destroy({where: {
+                    id: req.params.orderStateId
+                }})
+            if (rowsDeleted !== 0) {
+                res.status(200).json({message: "Successfully deleted order state."})
+            } else {
+                res.status(404).json({message: "Failed to delete order state.", errors: ["Order State with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete order state.", errors: errors})
+        }
+    }
+)
 
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
