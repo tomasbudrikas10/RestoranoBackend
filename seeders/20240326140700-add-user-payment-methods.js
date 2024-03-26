@@ -17,11 +17,17 @@ module.exports = {
         userId: 1,
         cardNumber: 1000_4000_7000_9000,
         cvc: 345,
+        expiryDate: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         userId: 1,
         cardNumber: 2000_4000_7000_9000,
         cvc: 456,
+        expiryDate: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ])
   },
