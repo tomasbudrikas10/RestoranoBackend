@@ -338,6 +338,33 @@ app.delete("/users/:userId",
     }
 )
 
+app.get("/orderstate", async (req, res) => {
+    let orderstates = await db["OrderState"].findAll()
+    res.status(200).json({message: "Successfully retrieved all order states.", data: orderstates})
+})
+
+app.post("/orderstate",
+    body("name").trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let orderStateExists = await db["OrderState"].findOne({where: {
+                name: data.name
+            }})
+            if (orderStateExists === null) {
+                await db["OrderState"].create(data)
+                res.status(200).json({message: "Successfully created order state."})
+            } else {
+                res.status(400).json({message: "Failed to create order state.", errors: ["Order state with provided name already exists."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create order state.", errors: errors})
+        }
+})
+
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
     try {
