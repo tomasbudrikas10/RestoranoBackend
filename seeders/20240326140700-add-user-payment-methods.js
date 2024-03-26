@@ -15,7 +15,7 @@ module.exports = {
     await queryInterface.bulkInsert("UserPaymentMethods", [
       {
         userId: 1,
-        cardNumber: 1000_4000_7000_9000,
+        cardNumber: 4111111111111111,
         cvc: 345,
         expiryDate: new Date(),
         createdAt: new Date(),
@@ -23,7 +23,7 @@ module.exports = {
       },
       {
         userId: 1,
-        cardNumber: 2000_4000_7000_9000,
+        cardNumber: 5555555555554444,
         cvc: 456,
         expiryDate: new Date(),
         createdAt: new Date(),
