@@ -8,6 +8,7 @@ const sequelize = new Sequelize('restoranas', 'root', '', {
     host: "localhost",
     dialect: 'mysql'
 })
+const bcrypt = require('bcrypt');
 app.use(express.json())
 app.get('/', async (req, res) => {
     res.send("Hello World!")
@@ -297,7 +298,8 @@ app.post("/users",
                 if (userNameExists === null) {
                     let roleExists = await db["Role"].findByPk(data.roleId)
                     if (roleExists !== null) {
-                        await db["User"].create(data)
+                        let hashedPw = await bcrypt.hash(data.password, 10)
+                        await db["User"].create({...data, password: hashedPw})
                         res.status(200).json({message: "Successfully created user."})
                     } else {
                         res.status(400).json({message: "Failed to create user.", errors: ["Provided role doesn't exist."]})
