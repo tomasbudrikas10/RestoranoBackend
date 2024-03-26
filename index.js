@@ -28,7 +28,10 @@ app.post('/products',
     body('description')
         .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
     body('price')
-        .trim().isNumeric().withMessage("Price must be a number."),
+        .trim().isNumeric().withMessage("Price must be a number.")
+        .customSanitizer((value) => {
+            return value.toFixed(2);
+        }),
     body('isAvailable').isBoolean().withMessage("isAvailable must be a boolean."),
     async (req, res) => {
         try {
@@ -61,7 +64,7 @@ app.post('/products',
         }
 })
 
-app.get("/products/:productId", param("productId").isNumeric().withMessage("Product ID must be numeric."), async (req, res) => {
+app.get("/products/:productId", param("productId").isInt().withMessage("Product ID must be an integer."), async (req, res) => {
     try {
         let product = await db["Product"].findByPk(req.params.productId)
         let validationRes = validationResult(req)
@@ -81,13 +84,16 @@ app.get("/products/:productId", param("productId").isNumeric().withMessage("Prod
 })
 
 app.put("/products/:productId",
-    param("productId").isNumeric().withMessage("Product ID must be numeric."),
+    param("productId").isInt().withMessage("Product ID must be an integer."),
     body('name')
         .trim().isLength({min: 8, max: 255}).withMessage("Name must be between 8 and 255 characters long."),
     body('description')
         .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
     body('price')
-        .trim().isNumeric().withMessage("Price must be a number."),
+        .trim().isNumeric().withMessage("Price must be a number.")
+        .customSanitizer((value) => {
+            return value.toFixed(2);
+        }),
     body('isAvailable').isBoolean().withMessage("Availability must be a boolean."),
     async (req, res) => {
         try {
@@ -121,7 +127,7 @@ app.put("/products/:productId",
     })
 
 app.delete("/products/:productId",
-    param("productId").isNumeric().withMessage("Product ID must be numeric."),
+    param("productId").isInt().withMessage("Product ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -181,7 +187,7 @@ app.post("/roles",
 })
 
 app.get("/roles/:roleId",
-    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    param("roleId").isInt().withMessage("Role ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -202,7 +208,7 @@ app.get("/roles/:roleId",
     })
 
 app.put("/roles/:roleId",
-    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    param("roleId").isInt().withMessage("Role ID must be an integer."),
     body("name")
         .trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
@@ -239,7 +245,7 @@ app.put("/roles/:roleId",
 )
 
 app.delete("/roles/:roleId",
-    param("roleId").isNumeric().withMessage("Role ID must be numeric."),
+    param("roleId").isInt().withMessage("Role ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -279,7 +285,7 @@ app.post("/users",
         .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
     body("location").optional().trim().notEmpty().withMessage("Location must not be empty."),
     body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
-        .isNumeric().withMessage("Role ID must be numeric."),
+        .isInt().withMessage("Role ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -309,7 +315,7 @@ app.post("/users",
     })
 
 app.get("/users/:userId",
-    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    param("userId").isInt().withMessage("User ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -330,14 +336,14 @@ app.get("/users/:userId",
     })
 
 app.put("/users/:userId",
-    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    param("userId").isInt().withMessage("User ID must be an integer."),
     body("name").trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
     body("password").trim().notEmpty().withMessage("Password must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
     body("location").optional().trim().notEmpty().withMessage("Location must not be empty."),
     body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
-        .isNumeric().withMessage("Role ID must be numeric."),
+        .isInt().withMessage("Role ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -375,7 +381,7 @@ app.put("/users/:userId",
     })
 
 app.delete("/users/:userId",
-    param("userId").isNumeric().withMessage("User ID must be numeric."),
+    param("userId").isInt().withMessage("User ID must be an integer."),
     async (req, res) => {
         try {
             let validatedRes = validationResult(req)
@@ -434,7 +440,7 @@ app.post("/orderstates",
 })
 
 app.get("/orderstates/:orderStateId",
-    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    param("orderStateId").isInt().withMessage("Order State ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -456,7 +462,7 @@ app.get("/orderstates/:orderStateId",
 )
 
 app.put("/orderstates/:orderStateId",
-    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    param("orderStateId").isInt().withMessage("Order State ID must be an integer."),
     body("name").trim().notEmpty().withMessage("Name must not be empty.")
         .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
@@ -491,7 +497,7 @@ app.put("/orderstates/:orderStateId",
     })
 
 app.delete("/orderstates/:orderStateId",
-    param("orderStateId").isNumeric().withMessage("Order State ID must be numeric."),
+    param("orderStateId").isInt().withMessage("Order State ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -525,7 +531,7 @@ app.get("/orders", async (req, res) => {
 
 app.post("/orders",
     body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
-        .isNumeric().withMessage("User ID must be numeric."),
+        .isInt().withMessage("User ID must be an integer."),
     body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
         .isDate().withMessage("Order date must be a valid date."),
     async (req, res) => {
@@ -550,7 +556,7 @@ app.post("/orders",
 })
 
 app.get("/orders/:orderId",
-    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    param("orderId").isInt().withMessage("Order ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -572,9 +578,9 @@ app.get("/orders/:orderId",
 )
 
 app.put("/orders/:orderId",
-    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    param("orderId").isInt().withMessage("Order ID must be an integer."),
     body("stateId").trim().notEmpty().withMessage("Order State ID must not be empty.")
-        .isNumeric().withMessage("Order State ID must be numeric."),
+        .isInt().withMessage("Order State ID must be an integer."),
     body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
         .isDate().withMessage("Order date must be a valid date."),
     async (req, res) => {
@@ -602,7 +608,7 @@ app.put("/orders/:orderId",
     })
 
 app.delete("/orders/:orderId",
-    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    param("orderId").isInt().withMessage("Order ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -636,11 +642,11 @@ app.get("/orderitems", async (req, res) => {
 
 app.post("/orderitems",
     body("orderId").trim().notEmpty().withMessage("Order ID must not be empty.")
-        .isNumeric().withMessage("Order ID must be numeric."),
+        .isInt().withMessage("Order ID must be an integer."),
     body("productId").trim().notEmpty().withMessage("Product ID must not be empty.")
-        .isNumeric().withMessage("Product ID must be numeric."),
+        .isInt().withMessage("Product ID must be an integer."),
     body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
-        .isNumeric().withMessage("Quantity must be numeric."),
+        .isInt().withMessage("Quantity must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -674,7 +680,7 @@ app.post("/orderitems",
 })
 
 app.get("/orderitems/:orderItemId",
-    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    param("orderItemId").isInt().withMessage("Order Item ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -696,11 +702,11 @@ app.get("/orderitems/:orderItemId",
 )
 
 app.put("/orderitems/:orderItemId",
-    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    param("orderItemId").isInt().withMessage("Order Item ID must be an integer."),
     body("productId").trim().notEmpty().withMessage("Product ID must not be empty.")
-        .isNumeric().withMessage("Product ID must be numeric."),
+        .isInt().withMessage("Product ID must be an integer."),
     body("quantity").trim().notEmpty().withMessage("Quantity must not be empty.")
-        .isNumeric().withMessage("Quantity must be numeric."),
+        .isInt().withMessage("Quantity must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -735,7 +741,7 @@ app.put("/orderitems/:orderItemId",
         }
     })
 app.delete("/orderitems/:orderItemId",
-    param("orderItemId").isNumeric().withMessage("Order Item ID must be numeric."),
+    param("orderItemId").isInt().withMessage("Order Item ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -769,7 +775,7 @@ app.get("/userpaymentmethods", async (req, res) => {
 
 app.post("/userpaymentmethods",
     body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
-        .isNumeric().withMessage("User ID must be numeric."),
+        .isInt().withMessage("User ID must be an integer."),
     body("cardNumber").trim().notEmpty().withMessage("Card number must not be empty.")
         .customSanitizer((value) => {
             return value.replace(/\s/g, '');
