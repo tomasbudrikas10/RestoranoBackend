@@ -434,6 +434,104 @@ app.delete("/orderstates/:orderStateId",
     }
 )
 
+app.get("/orders", async (req, res) => {
+    let orders = await db["Order"].findAll()
+    res.status(200).json({message: "Successfully retrieved all orders.", data: orders})
+})
+
+app.post("/orders",
+    body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
+        .isNumeric().withMessage("User ID must be numeric."),
+    body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
+        .isDate().withMessage("Order date must be a valid date."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let userExists = await db["User"].findByPk(data.userId)
+            if (userExists === null) {
+                res.status(400).json({message: "Failed to create order.", errors: ["Provided user doesn't exist."]})
+            } else {
+                await db["Order"].create({...data, stateId: 1})
+                res.status(200).json({message: "Successfully created order."})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to create order.", errors: errors})
+        }
+})
+
+app.get("/orders/:orderId",
+    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let order = await db["Order"].findByPk(req.params.orderId)
+            if (order !== null) {
+                res.status(200).json({message: "Successfully retrieved order.", data: order})
+            } else {
+                res.status(404).json({message: "Failed to retrieve order.", errors: ["Order with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to retrieve order.", errors: errors})
+        }
+    }
+)
+
+app.put("/orders/:orderId",
+    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
+        .isNumeric().withMessage("User ID must be numeric."),
+    body("stateId").trim().notEmpty().withMessage("Order State ID must not be empty.")
+        .isNumeric().withMessage("Order State ID must be numeric."),
+    body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
+        .isDate().withMessage("Order date must be a valid date."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        let data = matchedData(req)
+        if (validationRes.isEmpty()) {
+            let userExists = await db["User"].findByPk(data.userId)
+            let orderStateExists = await db["OrderState"].findByPk(data.stateId)
+            let order = await db["Order"].findByPk(req.params.orderId)
+            if (userExists === null) {
+                res.status(400).json({message: "Failed to update order.", errors: ["Provided user doesn't exist."]})
+            }
+            else if (orderStateExists === null) {
+                res.status(400).json({message: "Failed to update order.", errors: ["Provided order state doesn't exist."]})
+            } else if (order === null) {
+                res.status(404).json({message: "Failed to update order.", errors: ["Provided order doesn't exist."]})
+            } else {
+                await order.update(data)
+                res.status(200).json({message: "Successfully updated order."})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to update order.", errors: errors})
+        }
+    })
+
+app.delete("/orders/:orderId",
+    param("orderId").isNumeric().withMessage("Order ID must be numeric."),
+    async (req, res) => {
+        let validationRes = validationResult(req)
+        if (validationRes.isEmpty()) {
+            let rowsDeleted = await db["Order"].destroy({where: {
+                    id: req.params.orderId
+                }})
+            if (rowsDeleted !== 0) {
+                res.status(200).json({message: "Successfully deleted order."})
+            } else {
+                res.status(404).json({message: "Failed to delete order.", errors: ["Order with provided ID doesn't exist."]})
+            }
+        } else {
+            let errors = validationRes.array().map((error => error.msg))
+            res.status(400).json({message: "Failed to delete order.", errors: errors})
+        }
+    }
+)
+
+
 app.listen(port, async () => {
     console.log(`Example app listening on port ${port}`)
     try {
