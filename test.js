@@ -335,3 +335,40 @@ describe("Update Product", () => {
             })
     })
 })
+
+describe("Delete Product", () => {
+    test("Delete Product With Existing ID That Is Depended On", () => {
+        return request(app)
+            .delete("/products/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(500);
+            })
+    })
+    test("Delete Product With Existing ID", () => {
+        return request(app)
+            .delete("/products/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+        })
+    test("Delete Product With Non-Existing ID", () => {
+        return request(app)
+            .delete("/products/53")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Product with provided ID doesn't exist."))
+            })
+    })
+    test("Delete Product With Invalid ID", () => {
+        return request(app)
+            .delete("/products/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Product ID must be an integer."))
+            })
+    })
+})
