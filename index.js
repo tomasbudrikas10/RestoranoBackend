@@ -4,10 +4,6 @@ const port = 3000
 const { Sequelize, Op} = require('sequelize')
 const { body, validationResult, matchedData, param} = require('express-validator');
 const db = require('./models/index.js')
-const sequelize = new Sequelize('restoranas', 'root', '', {
-    host: "localhost",
-    dialect: 'mysql'
-})
 const bcrypt = require('bcrypt');
 app.use(express.json())
 app.get('/', async (req, res) => {
@@ -927,12 +923,4 @@ app.delete("/userpaymentmethods/:userPaymentMethodId",
     }
 )
 
-app.listen(port, async () => {
-    console.log(`Example app listening on port ${port}`)
-    try {
-        await sequelize.authenticate()
-        await sequelize.sync({force: false})
-    } catch(e) {
-        console.error(e)
-    }
-})
+module.exports = app;
