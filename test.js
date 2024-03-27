@@ -629,3 +629,125 @@ describe("Get User By ID", () => {
             })
     })
 })
+
+describe("Add User", () => {
+    test("Add User With Valid Data Without Location", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add User With Valid Data With Location", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas123",
+                password: "GerasSlaptazodis",
+                roleId: 1,
+                location: "Puiki Vieta"
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add User With Existing Name", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("A user with the provided name already exists."))
+            })
+    })
+    test("Add User With Non-Existing Role", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas123",
+                password: "GerasSlaptazodis",
+                roleId: 5
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Provided role doesn't exist."))
+            })
+    })
+    test("Add User With Name Too Short", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+            })
+    })
+    test("Add User With Name Too Long", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+            })
+    })
+    test("Add User With Password Too Short", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSl",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+            })
+    })
+    test("Add User With Password Too Long", () => {
+        return request(app)
+            .post("/users")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSlaptazodisGerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+            })
+    })
+})
