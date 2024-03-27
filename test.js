@@ -1209,3 +1209,44 @@ describe("Get Orders By ID", () => {
             })
     })
 })
+
+describe("Add Order", () => {
+    test("Add Order With Valid Data", () => {
+        return request(app)
+            .post("/orders")
+            .set('Content-Type', 'application/json')
+            .send({
+                userId: 1,
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add Order With Non-Existing User", () => {
+        return request(app)
+            .post("/orders")
+            .set('Content-Type', 'application/json')
+            .send({
+                userId: 153,
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Provided user doesn't exist.")).toBe(true)
+            })
+    })
+    test("Add Order With Invalid User ID", () => {
+        return request(app)
+            .post("/orders")
+            .set('Content-Type', 'application/json')
+            .send({
+                userId: "abc",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("User ID must be an integer.")).toBe(true)
+            })
+    })
+})

@@ -515,10 +515,7 @@ app.get("/orders", async (req, res) => {
 })
 
 app.post("/orders",
-    body("userId").trim().notEmpty().withMessage("User ID must not be empty.")
-        .isInt().withMessage("User ID must be an integer."),
-    body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
-        .isDate().withMessage("Order date must be a valid date."),
+    body("userId").trim().isInt().withMessage("User ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -528,7 +525,7 @@ app.post("/orders",
                 if (userExists === null) {
                     res.status(400).json({message: "Failed to create order.", errors: ["Provided user doesn't exist."]})
                 } else {
-                    await db["Order"].create({...data, stateId: 1})
+                    await db["Order"].create({...data, stateId: 1, orderDate: new Date()})
                     res.status(200).json({message: "Successfully created order."})
                 }
             } else {
