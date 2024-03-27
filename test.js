@@ -469,3 +469,83 @@ describe("Add Role", () => {
             })
     })
 })
+
+describe("Update Role", () => {
+    test("Update Role With Valid Data", () => {
+        return request(app)
+            .put("/roles/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas2",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update Role With Non-Existing ID", () => {
+        return request(app)
+            .put("/roles/253")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas23",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Couldn't find provided role."))
+            })
+    })
+    test("Update Role With Invalid ID", () => {
+        return request(app)
+            .put("/roles/a")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas2",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Role ID must be an integer."))
+            })
+    })
+    test("Update Role With Existing Name", () => {
+        return request(app)
+            .put("/roles/2")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas2",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Role name is already in use."))
+            })
+    })
+    test("Update Role With Name Too Short", () => {
+        return request(app)
+            .put("/roles/2")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+            })
+    })
+    test("Update Role With Name Too Long", () => {
+        return request(app)
+            .put("/roles/2")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+            })
+    })
+})
