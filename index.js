@@ -151,8 +151,7 @@ app.get("/roles", async (req, res) => {
 
 app.post("/roles",
     body("name")
-        .trim().notEmpty().withMessage("Name must not be empty.")
-        .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
+        .trim().isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -201,8 +200,7 @@ app.get("/roles/:roleId",
 app.put("/roles/:roleId",
     param("roleId").isInt().withMessage("Role ID must be an integer."),
     body("name")
-        .trim().notEmpty().withMessage("Name must not be empty.")
-        .isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
+        .trim().isLength({min: 3, max: 50}).withMessage("Name must be between 3 and 50 characters long."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -329,13 +327,10 @@ app.get("/users/:userId",
 
 app.put("/users/:userId",
     param("userId").isInt().withMessage("User ID must be an integer."),
-    body("name").trim().notEmpty().withMessage("Name must not be empty.")
-        .isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
-    body("password").trim().notEmpty().withMessage("Password must not be empty.")
-        .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
+    body("name").trim().isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
+    body("password").trim().isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
     body("location").optional().trim().notEmpty().withMessage("Location must not be empty."),
-    body("roleId").trim().notEmpty().withMessage("Role ID must not be empty.")
-        .isInt().withMessage("Role ID must be an integer."),
+    body("roleId").trim().isInt().withMessage("Role ID must be an integer."),
     async (req, res) => {
         try {
             let valResult = validationResult(req)
@@ -358,7 +353,7 @@ app.put("/users/:userId",
                             res.status(404).json({message: "Failed to update user.", errors: ["No user found with provided ID."]})
                         }
                     } else {
-                        res.status(400).json({message: "Failed to update user.", errors: ["No role found with provided ID.."]})
+                        res.status(400).json({message: "Failed to update user.", errors: ["No role found with provided ID."]})
                     }
                 } else {
                     res.status(400).json({message: "Failed to update user.", errors: ["Provided name is already in use."]})
