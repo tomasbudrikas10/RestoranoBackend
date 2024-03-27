@@ -372,3 +372,16 @@ describe("Delete Product", () => {
             })
     })
 })
+
+describe("Get All Roles", () => {
+    test("Trying to get all roles", () => {
+        return request(app)
+            .get("/roles")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.length).toBe(3);
+                expect(response.body.data[1].name).toBe("Darbuotojas");
+            })
+    });
+})
