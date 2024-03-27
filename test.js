@@ -903,3 +903,40 @@ describe("Update User", () => {
             })
     })
 })
+
+describe("Delete User", () => {
+    test("Delete User With Existing ID That Is Depended On", () => {
+        return request(app)
+            .delete("/users/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(500);
+            })
+    })
+    test("Delete User With Existing ID", () => {
+        return request(app)
+            .delete("/users/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Delete User With Non-Existing ID", () => {
+        return request(app)
+            .delete("/users/53")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("User with provided ID doesn't exist."))
+            })
+    })
+    test("Delete User With Invalid ID", () => {
+        return request(app)
+            .delete("/users/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("User ID must be an integer."))
+            })
+    })
+})
