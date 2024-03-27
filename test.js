@@ -1166,3 +1166,46 @@ describe("Delete Order State", () => {
             })
     })
 })
+
+describe("Get All Orders", () => {
+    test("Trying to get all products", () => {
+        return request(app)
+            .get("/orders")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.length).toBe(3);
+                expect(response.body.data[1].stateId).toBe(2);
+            })
+    });
+});
+
+describe("Get Orders By ID", () => {
+    test("Get Orders With Existing ID", () => {
+        return request(app)
+            .get("/orders/3")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.stateId).toBe(3);
+            })
+    })
+    test("Get Orders With Non-Existing ID", () => {
+        return request(app)
+            .get("/orders/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Order with provided ID doesn't exist.")).toBe(true)
+            })
+    })
+    test("Get Orders With Invalid ID", () => {
+        return request(app)
+            .get("/orders/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order ID must be an integer.")).toBe(true)
+            })
+    })
+})
