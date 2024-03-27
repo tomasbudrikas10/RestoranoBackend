@@ -983,3 +983,57 @@ describe("Get Order State By ID", () => {
             })
     })
 })
+
+describe("Add Order State", () => {
+    test("Add Order State With Valid Data", () => {
+        return request(app)
+            .post("/orderstates")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add Order State With Existing Name", () => {
+        return request(app)
+            .post("/orderstates")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order state with provided name already exists.")).toBe(true)
+            })
+    })
+    test("Add Order State With Name Too Short", () => {
+        return request(app)
+            .post("/orderstates")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 30 characters long.")).toBe(true)
+            })
+    })
+    test("Add Order State With Name Too Long", () => {
+        return request(app)
+            .post("/orderstates")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 30 characters long.")).toBe(true)
+            })
+    })
+})
