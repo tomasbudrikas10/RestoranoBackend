@@ -415,3 +415,57 @@ describe("Get Role By ID", () => {
             })
     })
 })
+
+describe("Add Role", () => {
+    test("Add Role With Valid Data", () => {
+        return request(app)
+            .post("/roles")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add Role With Existing Name", () => {
+        return request(app)
+            .post("/roles")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Role name is already in use."))
+            })
+    })
+    test("Add Role With Name Too Short", () => {
+        return request(app)
+            .post("/roles")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+            })
+    })
+    test("Add Role With Name Too Long", () => {
+        return request(app)
+            .post("/roles")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+            })
+    })
+})
