@@ -586,3 +586,46 @@ describe("Delete Role", () => {
             })
     })
 })
+
+describe("Get All Users", () => {
+    test("Trying to get all users", () => {
+        return request(app)
+            .get("/users")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.length).toBe(3);
+                expect(response.body.data[1].name).toBe("TikrasDarbuotojas2");
+            })
+    });
+});
+
+describe("Get User By ID", () => {
+    test("Get User With Existing ID", () => {
+        return request(app)
+            .get("/users/3")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.name).toBe("KietasAdminas3");
+            })
+    })
+    test("Get User With Non-Existing ID", () => {
+        return request(app)
+            .get("/users/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("User with provided ID doesn't exist.")).toBe(true)
+            })
+    })
+    test("Get User With Invalid ID", () => {
+        return request(app)
+            .get("/users/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("User ID must be an integer."))
+            })
+    })
+})
