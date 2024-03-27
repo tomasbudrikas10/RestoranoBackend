@@ -549,3 +549,40 @@ describe("Update Role", () => {
             })
     })
 })
+
+describe("Delete Role", () => {
+    test("Delete Role With Existing ID That Is Depended On", () => {
+        return request(app)
+            .delete("/roles/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(500);
+            })
+    })
+    test("Delete Role With Existing ID", () => {
+        return request(app)
+            .delete("/roles/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Delete Role With Non-Existing ID", () => {
+        return request(app)
+            .delete("/roles/53")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Role with provided ID doesn't exist."))
+            })
+    })
+    test("Delete Role With Invalid ID", () => {
+        return request(app)
+            .delete("/roles/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Role ID must be an integer."))
+            })
+    })
+})
