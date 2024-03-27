@@ -1300,7 +1300,7 @@ describe("Update Order", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
+                expect(response.body.errors.includes("Provided order doesn't exist.")).toBe(true)
             })
     })
 })
