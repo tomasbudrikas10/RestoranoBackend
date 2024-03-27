@@ -25,10 +25,7 @@ app.post('/products',
     body('description')
         .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
     body('price')
-        .trim().isNumeric().withMessage("Price must be a number.")
-        .customSanitizer((value) => {
-            return value.toFixed(2);
-        }),
+        .trim().isNumeric().withMessage("Price must be a number."),
     body('isAvailable').isBoolean().withMessage("isAvailable must be a boolean."),
     async (req, res) => {
         try {
@@ -42,7 +39,7 @@ app.post('/products',
                     await db["Product"].create({
                         name: data.name,
                         description: data.description,
-                        price: data.price,
+                        price: Number(data.price).toFixed(2),
                         isAvailable: data.isAvailable,
                     })
                     res.status(200).json({message: "Successfully created product."})
@@ -87,10 +84,7 @@ app.put("/products/:productId",
     body('description')
         .trim().isLength({min: 30, max: 255}).withMessage("Description must be between 30 and 255 characters long."),
     body('price')
-        .trim().isNumeric().withMessage("Price must be a number.")
-        .customSanitizer((value) => {
-            return value.toFixed(2);
-        }),
+        .trim().isNumeric().withMessage("Price must be a number."),
     body('isAvailable').isBoolean().withMessage("Availability must be a boolean."),
     async (req, res) => {
         try {
@@ -108,7 +102,7 @@ app.put("/products/:productId",
                             }
                         }})
                     if (productNameExists === null) {
-                        await product.update(data)
+                        await product.update({...data, price: Number(data.price).toFixed(2)})
                         res.status(200).json({message: "Successfully updated product."})
                     } else {
                         res.status(400).json({message: "Failed to update product.", errors: ["Another product already has the provided name."]})

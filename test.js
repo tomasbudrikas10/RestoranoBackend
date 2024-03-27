@@ -43,3 +43,133 @@ describe("Get Product By ID", () => {
             })
     })
 })
+
+describe("Add Product", () => {
+    test("Add Product With Valid Data", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "Labai geras ir tinkantis aprašymas.",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Add Product With Existing Name", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "Labai geras ir tinkantis aprašymas.",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Product with that name already exists.")).toBe(true)
+            })
+    })
+    test("Add Product With Too Short Name", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVa",
+                description: "Labai geras ir tinkantis aprašymas.",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 255 characters long.")).toBe(true)
+            })
+    })
+    test("Add Product With Too Long Name", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+                description: "Labai geras ir tinkantis aprašymas.",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 255 characters long.")).toBe(true)
+            })
+    })
+    test("Add Product With Too Short Description", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "abc",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Description must be between 30 and 255 characters long.")).toBe(true)
+            })
+    })
+    test("Add Product With Too Long Description", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc",
+                price: 12.50,
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Description must be between 30 and 255 characters long.")).toBe(true)
+            })
+    })
+    test("Add Product With Invalid Price", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "abc",
+                price: "kaina",
+                isAvailable: true
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Price must be a number.")).toBe(true)
+            })
+    })
+    test("Add Product With Invalid Availability", () => {
+        return request(app)
+            .post("/products")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                description: "abc",
+                price: 12.50,
+                isAvailable: "treu"
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("isAvailable must be a boolean.")).toBe(true)
+            })
+    })
+})
