@@ -751,3 +751,155 @@ describe("Add User", () => {
             })
     })
 })
+
+describe("Update User", () => {
+    test("Update User With Valid Data Without Location", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas12",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update User With Non-Existing ID", () => {
+        return request(app)
+            .put("/users/253")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas23",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("No user found with provided ID."))
+            })
+    })
+    test("Update User With Invalid ID", () => {
+        return request(app)
+            .put("/users/a")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas2",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("User ID must be an integer."))
+            })
+    })
+    test("Update User With Valid Data With Location", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas12",
+                password: "GerasSlaptazodis",
+                roleId: 1,
+                location: "Puiki Vieta"
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update User With Existing Name", () => {
+        return request(app)
+            .put("/users/2")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas12",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Provided name is already in use."))
+            })
+    })
+    test("Update User With Non-Existing Role", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas12",
+                password: "GerasSlaptazodis",
+                roleId: 5
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("No role found with provided ID."))
+            })
+    })
+    test("Update User With Name Too Short", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+            })
+    })
+    test("Update User With Name Too Long", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+                password: "GerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+            })
+    })
+    test("Update User With Password Too Short", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSl",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+            })
+    })
+    test("Update User With Password Too Long", () => {
+        return request(app)
+            .put("/users/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas",
+                password: "GerasSlaptazodisGerasSlaptazodis",
+                roleId: 1
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+            })
+    })
+})
