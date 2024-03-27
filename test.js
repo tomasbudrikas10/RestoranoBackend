@@ -940,3 +940,46 @@ describe("Delete User", () => {
             })
     })
 })
+
+describe("Get All Order States", () => {
+    test("Trying to get all order states", () => {
+        return request(app)
+            .get("/orderstates")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.length).toBe(6);
+                expect(response.body.data[1].name).toBe("Priimtas");
+            })
+    });
+})
+
+describe("Get Order State By ID", () => {
+    test("Get Order State With Existing ID", () => {
+        return request(app)
+            .get("/orderstates/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.name).toBe("Sukurtas")
+            })
+    })
+    test("Get Order State With Non-Existing ID", () => {
+        return request(app)
+            .get("/orderstates/7")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Order State with provided ID doesn't exist."))
+            })
+    })
+    test("Get Order State With Invalid ID", () => {
+        return request(app)
+            .get("/orderstates/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order State ID must be an integer."))
+            })
+    })
+})
