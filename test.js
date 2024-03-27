@@ -1037,3 +1037,95 @@ describe("Add Order State", () => {
             })
     })
 })
+
+describe("Update Order State", () => {
+    test("Update Order State With Valid Data", () => {
+        return request(app)
+            .put("/orderstates/3")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas1234",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update Order State With Non-Existing ID", () => {
+        return request(app)
+            .put("/orderstates/253")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas23",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Couldn't find Order State with provided ID.")).toBe(true)
+            })
+    })
+    test("Update Order State With Invalid ID", () => {
+        return request(app)
+            .put("/orderstates/a")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas2",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
+            })
+    })
+    test("Update Order State With Valid Data", () => {
+        return request(app)
+            .put("/orderstates/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas1",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update Order State With Existing Name", () => {
+        return request(app)
+            .put("/orderstates/2")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardas1",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Another Order State is already using that name.")).toBe(true)
+            })
+    })
+    test("Update Order State With Name Too Short", () => {
+        return request(app)
+            .put("/orderstates/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "Ge",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 30 characters long.")).toBe(true)
+            })
+    })
+    test("Update Order State With Name Too Long", () => {
+        return request(app)
+            .put("/orderstates/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                name: "GerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardasGerasVardas",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Name must be between 3 and 30 characters long.")).toBe(true)
+            })
+    })
+})

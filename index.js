@@ -401,8 +401,7 @@ app.get("/orderstates", async (req, res) => {
 })
 
 app.post("/orderstates",
-    body("name").trim().notEmpty().withMessage("Name must not be empty.")
-        .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
+    body("name").trim().isLength({min: 3, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
@@ -450,8 +449,7 @@ app.get("/orderstates/:orderStateId",
 
 app.put("/orderstates/:orderStateId",
     param("orderStateId").isInt().withMessage("Order State ID must be an integer."),
-    body("name").trim().notEmpty().withMessage("Name must not be empty.")
-        .isLength({min: 8, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
+    body("name").trim().isLength({min: 3, max: 30}).withMessage("Name must be between 3 and 30 characters long."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)
