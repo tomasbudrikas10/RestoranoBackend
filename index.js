@@ -561,10 +561,7 @@ app.get("/orders/:orderId",
 
 app.put("/orders/:orderId",
     param("orderId").isInt().withMessage("Order ID must be an integer."),
-    body("stateId").trim().notEmpty().withMessage("Order State ID must not be empty.")
-        .isInt().withMessage("Order State ID must be an integer."),
-    body("orderDate").trim().notEmpty().withMessage("Order date must not be empty.")
-        .isDate().withMessage("Order date must be a valid date."),
+    body("stateId").isInt().withMessage("Order State ID must be an integer."),
     async (req, res) => {
         try {
             let validationRes = validationResult(req)

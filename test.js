@@ -1250,3 +1250,57 @@ describe("Add Order", () => {
             })
     })
 })
+
+describe("Update Order", () => {
+    test("Update Order With Valid Data", () => {
+        return request(app)
+            .put("/orders/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                stateId: 5,
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Update Order With Non-Existing Order State", () => {
+        return request(app)
+            .put("/orders/1")
+            .set('Content-Type', 'application/json')
+            .send({
+                stateId: 153,
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Provided order state doesn't exist.")).toBe(true)
+            })
+    })
+    test("Update Order With Invalid Order State ID", () => {
+        return request(app)
+            .put("/orders/a")
+            .set('Content-Type', 'application/json')
+            .send({
+                stateId: "abc",
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
+            })
+    })
+    test("Update Order With Non-Existing Order ID", () => {
+        return request(app)
+            .put("/orders/999")
+            .set('Content-Type', 'application/json')
+            .send({
+                stateId: 1,
+            })
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
+            })
+    })
+})
