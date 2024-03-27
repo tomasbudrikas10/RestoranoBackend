@@ -385,3 +385,33 @@ describe("Get All Roles", () => {
             })
     });
 })
+
+describe("Get Role By ID", () => {
+    test("Get Role With Existing ID", () => {
+        return request(app)
+            .get("/roles/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.data.name).toBe("Vartotojas")
+            })
+    })
+    test("Get Role With Non-Existing ID", () => {
+        return request(app)
+            .get("/roles/4")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Role with provided ID doesn't exist."))
+            })
+    })
+    test("Get Role With Invalid ID", () => {
+        return request(app)
+            .get("/roles/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Role ID must be an integer."))
+            })
+    })
+})
