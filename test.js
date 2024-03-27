@@ -359,7 +359,7 @@ describe("Delete Product", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Product with provided ID doesn't exist."))
+                expect(response.body.errors.includes("Product with provided ID doesn't exist.")).toBe(true)
             })
     })
     test("Delete Product With Invalid ID", () => {
@@ -368,7 +368,7 @@ describe("Delete Product", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Product ID must be an integer."))
+                expect(response.body.errors.includes("Product ID must be an integer.")).toBe(true)
             })
     })
 })
@@ -402,7 +402,7 @@ describe("Get Role By ID", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Role with provided ID doesn't exist."))
+                expect(response.body.errors.includes("No role exists with provided ID.")).toBe(true)
             })
     })
     test("Get Role With Invalid ID", () => {
@@ -411,7 +411,7 @@ describe("Get Role By ID", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Role ID must be an integer."))
+                expect(response.body.errors.includes("Role ID must be an integer.")).toBe(true)
             })
     })
 })
@@ -439,7 +439,7 @@ describe("Add Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Role name is already in use."))
+                expect(response.body.errors.includes("Role name is already in use.")).toBe(true)
             })
     })
     test("Add Role With Name Too Short", () => {
@@ -452,7 +452,7 @@ describe("Add Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long.")).toBe(true)
             })
     })
     test("Add Role With Name Too Long", () => {
@@ -465,7 +465,7 @@ describe("Add Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long.")).toBe(true)
             })
     })
 })
@@ -493,7 +493,7 @@ describe("Update Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Couldn't find provided role."))
+                expect(response.body.errors.includes("Couldn't find provided role.")).toBe(true)
             })
     })
     test("Update Role With Invalid ID", () => {
@@ -506,7 +506,7 @@ describe("Update Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Role ID must be an integer."))
+                expect(response.body.errors.includes("Role ID must be an integer.")).toBe(true)
             })
     })
     test("Update Role With Existing Name", () => {
@@ -519,7 +519,7 @@ describe("Update Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Role name is already in use."))
+                expect(response.body.errors.includes("Role name is already in use.")).toBe(true)
             })
     })
     test("Update Role With Name Too Short", () => {
@@ -532,7 +532,7 @@ describe("Update Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long.")).toBe(true)
             })
     })
     test("Update Role With Name Too Long", () => {
@@ -545,7 +545,7 @@ describe("Update Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 3 and 50 characters long."))
+                expect(response.body.errors.includes("Name must be between 3 and 50 characters long.")).toBe(true)
             })
     })
 })
@@ -573,7 +573,7 @@ describe("Delete Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Role with provided ID doesn't exist."))
+                expect(response.body.errors.includes("No role exists with provided ID.")).toBe(true)
             })
     })
     test("Delete Role With Invalid ID", () => {
@@ -582,7 +582,7 @@ describe("Delete Role", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Role ID must be an integer."))
+                expect(response.body.errors.includes("Role ID must be an integer.")).toBe(true)
             })
     })
 })
@@ -625,7 +625,7 @@ describe("Get User By ID", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("User ID must be an integer."))
+                expect(response.body.errors.includes("User ID must be an integer.")).toBe(true)
             })
     })
 })
@@ -672,7 +672,7 @@ describe("Add User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("A user with the provided name already exists."))
+                expect(response.body.errors.includes("A user with the provided name already exists.")).toBe(true)
             })
     })
     test("Add User With Non-Existing Role", () => {
@@ -680,14 +680,14 @@ describe("Add User", () => {
             .post("/users")
             .set('Content-Type', 'application/json')
             .send({
-                name: "GerasVardas123",
+                name: "GerasVardas1234",
                 password: "GerasSlaptazodis",
                 roleId: 5
             })
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Provided role doesn't exist."))
+                expect(response.body.errors.includes("Provided role doesn't exist.")).toBe(true)
             })
     })
     test("Add User With Name Too Short", () => {
@@ -702,7 +702,7 @@ describe("Add User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Add User With Name Too Long", () => {
@@ -717,7 +717,7 @@ describe("Add User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Add User With Password Too Short", () => {
@@ -732,7 +732,7 @@ describe("Add User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Add User With Password Too Long", () => {
@@ -747,7 +747,7 @@ describe("Add User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long.")).toBe(true)
             })
     })
 })
@@ -779,7 +779,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("No user found with provided ID."))
+                expect(response.body.errors.includes("No user found with provided ID.")).toBe(true)
             })
     })
     test("Update User With Invalid ID", () => {
@@ -794,7 +794,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("User ID must be an integer."))
+                expect(response.body.errors.includes("User ID must be an integer.")).toBe(true)
             })
     })
     test("Update User With Valid Data With Location", () => {
@@ -824,7 +824,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Provided name is already in use."))
+                expect(response.body.errors.includes("Provided name is already in use.")).toBe(true)
             })
     })
     test("Update User With Non-Existing Role", () => {
@@ -839,7 +839,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("No role found with provided ID."))
+                expect(response.body.errors.includes("No role found with provided ID.")).toBe(true)
             })
     })
     test("Update User With Name Too Short", () => {
@@ -854,7 +854,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Update User With Name Too Long", () => {
@@ -869,7 +869,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Name must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Name must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Update User With Password Too Short", () => {
@@ -884,7 +884,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long.")).toBe(true)
             })
     })
     test("Update User With Password Too Long", () => {
@@ -899,7 +899,7 @@ describe("Update User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Password must be between 8 and 30 characters long."))
+                expect(response.body.errors.includes("Password must be between 8 and 30 characters long.")).toBe(true)
             })
     })
 })
@@ -927,7 +927,7 @@ describe("Delete User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("User with provided ID doesn't exist."))
+                expect(response.body.errors.includes("No user found with provided ID.")).toBe(true)
             })
     })
     test("Delete User With Invalid ID", () => {
@@ -936,7 +936,7 @@ describe("Delete User", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("User ID must be an integer."))
+                expect(response.body.errors.includes("User ID must be an integer.")).toBe(true)
             })
     })
 })
@@ -970,7 +970,7 @@ describe("Get Order State By ID", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
-                expect(response.body.errors.includes("Order State with provided ID doesn't exist."))
+                expect(response.body.errors.includes("Order State with provided ID doesn't exist.")).toBe(true)
             })
     })
     test("Get Order State With Invalid ID", () => {
@@ -979,7 +979,7 @@ describe("Get Order State By ID", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(400);
-                expect(response.body.errors.includes("Order State ID must be an integer."))
+                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
             })
     })
 })
