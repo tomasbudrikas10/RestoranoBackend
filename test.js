@@ -1129,3 +1129,40 @@ describe("Update Order State", () => {
             })
     })
 })
+
+describe("Delete Order State", () => {
+    test("Delete Order State With Existing ID That Is Depended On", () => {
+        return request(app)
+            .delete("/orderstates/1")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(500);
+            })
+    })
+    test("Delete Order State With Existing ID", () => {
+        return request(app)
+            .delete("/orderstates/7")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(200);
+            })
+    })
+    test("Delete Order State With Non-Existing ID", () => {
+        return request(app)
+            .delete("/orderstates/53")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(404);
+                expect(response.body.errors.includes("Order State with provided ID doesn't exist.")).toBe(true)
+            })
+    })
+    test("Delete Order State With Invalid ID", () => {
+        return request(app)
+            .delete("/orderstates/a")
+            .then(response => {
+                expect(response.headers["content-type"]).toMatch(/json/);
+                expect(response.statusCode).toBe(400);
+                expect(response.body.errors.includes("Order State ID must be an integer.")).toBe(true)
+            })
+    })
+})
