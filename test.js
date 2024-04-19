@@ -8,7 +8,7 @@ describe("Get All Products", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(200);
-                expect(response.body.data.length).toBe(3);
+                expect(response.body.data.length).toBe(21);
                 expect(response.body.data[1].name).toBe("Produktas B");
             })
     });
@@ -26,7 +26,7 @@ describe("Get Product By ID", () => {
     })
     test("Get Product With Non-Existing ID", () => {
         return request(app)
-            .get("/products/4")
+            .get("/products/234")
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
@@ -594,7 +594,7 @@ describe("Get All Users", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(200);
-                expect(response.body.data.length).toBe(3);
+                expect(response.body.data.length).toBe(23);
                 expect(response.body.data[1].name).toBe("TikrasDarbuotojas2");
             })
     });
@@ -612,7 +612,7 @@ describe("Get User By ID", () => {
     })
     test("Get User With Non-Existing ID", () => {
         return request(app)
-            .get("/users/4")
+            .get("/users/43")
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);
@@ -1087,6 +1087,7 @@ describe("Update Order State", () => {
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(200);
+
             })
     })
     test("Update Order State With Existing Name", () => {
@@ -1192,7 +1193,7 @@ describe("Get Orders By ID", () => {
     })
     test("Get Orders With Non-Existing ID", () => {
         return request(app)
-            .get("/orders/4")
+            .get("/orders/232")
             .then(response => {
                 expect(response.headers["content-type"]).toMatch(/json/);
                 expect(response.statusCode).toBe(404);

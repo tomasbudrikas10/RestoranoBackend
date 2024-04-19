@@ -5,6 +5,12 @@ const { Sequelize, Op} = require('sequelize')
 const { body, validationResult, matchedData, param} = require('express-validator');
 const db = require('./models/index.js')
 const bcrypt = require('bcrypt');
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+});
 app.use(express.json())
 app.get('/', async (req, res) => {
     res.send("Hello World!")
@@ -287,8 +293,8 @@ app.post("/users",
                     let roleExists = await db["Role"].findByPk(data.roleId)
                     if (roleExists !== null) {
                         let hashedPw = await bcrypt.hash(data.password, 10)
-                        await db["User"].create({...data, password: hashedPw})
-                        res.status(200).json({message: "Successfully created user."})
+                        let newUser = await db["User"].create({...data, password: hashedPw})
+                        res.status(200).json({message: "Successfully created user.", id: newUser.id})
                     } else {
                         res.status(400).json({message: "Failed to create user.", errors: ["Provided role doesn't exist."]})
                     }
@@ -304,6 +310,37 @@ app.post("/users",
         }
     })
 
+app.post("/login",
+    body("name").trim().notEmpty().withMessage("Name must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Name must be between 8 and 30 characters long."),
+    body("password").trim().notEmpty().withMessage("Password must not be empty.")
+        .isLength({min: 8, max: 30}).withMessage("Password must be between 8 and 30 characters long."),
+    async (req, res) => {
+        try {
+            let valResult = validationResult(req)
+            let data = matchedData(req)
+            if (valResult.isEmpty()) {
+                let userNameExists = await db["User"].findOne({where: {
+                        name: data.name
+                    }})
+                if (userNameExists !== null) {
+                    let passwordMatches = await bcrypt.compare(data.password, userNameExists.password)
+                    if (passwordMatches) {
+                        res.status(200).json({message: "Successfully logged in user.", id: userNameExists.id, name: userNameExists.name, role: userNameExists.roleId})
+                    } else {
+                        res.status(400).json({message: "Failed to login user.", errors: ["Provided password doesn't match."]})
+                    }
+                } else {
+                    res.status(400).json({message: "Failed to login user.", errors: ["No user with the provided name exists."]})
+                }
+            } else {
+                let errors = valResult.array().map((error => error.msg))
+                res.status(400).json({message: "Failed to login user.", errors: errors})
+            }
+        } catch (e) {
+            res.status(500).json({message: "Failed to login user.", errors: [e]})
+        }
+    })
 app.get("/users/:userId",
     param("userId").isInt().withMessage("User ID must be an integer."),
     async (req, res) => {
@@ -525,8 +562,8 @@ app.post("/orders",
                 if (userExists === null) {
                     res.status(400).json({message: "Failed to create order.", errors: ["Provided user doesn't exist."]})
                 } else {
-                    await db["Order"].create({...data, stateId: 1, orderDate: new Date()})
-                    res.status(200).json({message: "Successfully created order."})
+                    let newOrder = await db["Order"].create({...data, stateId: 1, orderDate: new Date()})
+                    res.status(200).json({message: "Successfully created order.", id: newOrder.id})
                 }
             } else {
                 let errors = validationRes.array().map((error => error.msg))
